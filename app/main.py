@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 import uvicorn
-import system_config
+from utils import system_config
+
+
+
 
 app = FastAPI()
 
