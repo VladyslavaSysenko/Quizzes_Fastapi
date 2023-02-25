@@ -1,13 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 import connections
-
-from inspect import getsourcefile
-import os.path as path, sys
-current_dir = path.dirname(path.abspath(getsourcefile(lambda:0)))
-sys.path.insert(0, current_dir[:current_dir.rfind(path.sep)])
 import system_config
-sys.path.pop(0)
 
 app = FastAPI()
 
