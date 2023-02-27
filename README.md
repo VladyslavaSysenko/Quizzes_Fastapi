@@ -13,3 +13,8 @@ In "Meduzzen-internship" folder run "python -m pytest".
 (it will run a container and tests automatically)
 
 To see terminal run "docker logs container_name"
+
+## To start docker with docker-compose
+-In "Meduzzen-internship" folder run "docker-compose up --build"
+## To delete docker with docker-compose
+-In "Meduzzen-internship" folder run "docker-compose down -v"
