@@ -18,3 +18,8 @@ To see terminal run "docker logs container_name"
 -In "Meduzzen-internship" folder run "docker-compose up --build"
 ## To delete docker with docker-compose
 -In "Meduzzen-internship" folder run "docker-compose down -v"
+
+## To create migration with alembic
+-In "Meduzzen-internship" folder run "docker-compose run app alembic revision --autogenerate"
+## To implement migration with alembic
+-In "Meduzzen-internship" folder run "docker-compose run app alembic upgrade head"
