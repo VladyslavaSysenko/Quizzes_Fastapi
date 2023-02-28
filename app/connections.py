@@ -3,7 +3,7 @@ from databases import Database
 from redis import asyncio as aioredis
 
 db = Database(DB.POSTGRES_URL)
-redis=None
+redis = None
 
 #return database
 def get_db():
