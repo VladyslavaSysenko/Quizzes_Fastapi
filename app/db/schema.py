@@ -1,34 +1,34 @@
 from pydantic import BaseModel, EmailStr
 
-class User(BaseModel):
+
+class UserList(BaseModel):
+    id: int
     username: str
     first_name: str
     last_name: str
     email: EmailStr
-    password: str
 
     class Config:
         orm_mode = True
 
 
-class SignUp(BaseModel):
-    username: str
-    first_name: str
-    last_name: str
-    email: EmailStr
+class User(UserList):
     password: str
-    password_rep: str
-
-    class Config:
-        orm_mode = True
 
 
 class SignIn(BaseModel):
-    username: str
+    email: str
     password: str
 
     class Config:
         orm_mode = True
+
+
+class SignUp(SignIn):
+    username: str
+    first_name: str
+    last_name: str
+    password_rep: str
 
 
 class UserUpgrade(BaseModel):
@@ -37,13 +37,5 @@ class UserUpgrade(BaseModel):
     password: str | None = None
     username: str | None = None
 
-    class Config:
-        orm_mode = True
-
-
-class UsersList(BaseModel):
-    users: list[User]
-    amount: int
-    
     class Config:
         orm_mode = True
