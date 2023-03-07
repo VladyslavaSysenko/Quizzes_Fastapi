@@ -7,20 +7,16 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.system_config import DB
-
 import os, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR+"/app")
 
+from app.core.system_config import DB
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-
-# this will overwrite the ini-file sqlalchemy.url path
-# with the path given in the config of the main code
-config.set_main_option("sqlalchemy.url", DB.POSTGRES_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -33,12 +29,15 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from app.db import models
 
-target_metadata = models.metadata
+target_metadata = models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+# this will overwrite the ini-file sqlalchemy.url path
+# with the path given in the config of the main code
+config.set_main_option("sqlalchemy.url", DB.POSTGRES_URL)
 
 
 def run_migrations_offline() -> None:

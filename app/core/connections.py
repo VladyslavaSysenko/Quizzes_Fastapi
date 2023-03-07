@@ -1,9 +1,10 @@
-from system_config import DB
+from core.system_config import DB
 from databases import Database
 from redis import asyncio as aioredis
 
-db = Database(DB.POSTGRES_URL)
+
 redis = None
+db = Database(DB.POSTGRES_URL)
 
 #return database
 def get_db():
@@ -20,8 +21,8 @@ async def disconnect_from_db():
 #connect to redis
 async def connect_to_redis():
     global redis
-    redis = aioredis.from_url(DB.REDIS_URL)
+    redis = await aioredis.from_url(DB.REDIS_URL)
 
 #disconnect from redis
 async def disconnect_from_redis():
-    redis.close()
+    await redis.close()
