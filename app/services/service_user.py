@@ -2,7 +2,7 @@ from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList
 from schemas.schema_user import User as UserSchema
 from db.models import User
 from utils.password_hasher import Hasher
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete, update
 from databases import Database
 
@@ -52,7 +52,7 @@ class Service_user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserList(**user)
 
-    async def delete_user(self, user_id: int) -> dict:
+    async def delete_user(self, user_id: int) -> status:
         query = delete(User).where(User.user_id == user_id)
         await self.db.execute(query)
         # check if deleted
@@ -60,7 +60,7 @@ class Service_user:
         user = await self.db.fetch_one(query)
         if user:
             raise HTTPException(status_code=500, detail="Something went wrong")
-        return {"status": "successful"}
+        return status.HTTP_200_OK
 
     async def update_user(self, user_id: int, payload:UserUpdate) -> UserList:
         changed_values = self.get_changed_values(payload=payload)
