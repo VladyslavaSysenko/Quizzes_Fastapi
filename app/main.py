@@ -15,7 +15,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    await connections.connect_to_db()
+    await connections.disconnect_from_db()
     await connections.disconnect_from_redis()
 
 @app.get("/")

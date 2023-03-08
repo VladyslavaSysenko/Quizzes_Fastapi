@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String,Column
+from sqlalchemy import Integer, String, Column, DateTime, func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -11,3 +11,4 @@ class User(Base):
     user_password = Column("user_password", String, nullable=False)
     user_first_name = Column("user_first_name", String, nullable=False)
     user_last_name = Column("user_last_name", String, nullable=False)
+    created_at = Column("created_at", DateTime(timezone=True), server_default=func.now())

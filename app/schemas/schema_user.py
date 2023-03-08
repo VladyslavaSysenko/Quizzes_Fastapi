@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 
 # return user
 class UserList(BaseModel):
@@ -7,6 +8,7 @@ class UserList(BaseModel):
     user_first_name: str | None = None
     user_last_name: str | None = None
     user_email: EmailStr | None = None
+    created_at: datetime | None = None
 
     class Config:
         orm_mode = True
@@ -48,3 +50,11 @@ class UserUpdate(BaseModel):
 
     class Config:
         orm_mode = True
+
+# response user
+class ResponseUserList(BaseModel):
+    result: UserList
+
+# response users
+class ResponseUsersList(BaseModel):
+    result: UsersList
