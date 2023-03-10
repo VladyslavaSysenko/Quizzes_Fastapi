@@ -24,10 +24,10 @@ async def get_user(user_id: int, db: Database = Depends(get_db)) -> ResponseUser
 @router.post("/user", response_model=ResponseUserList, status_code=200)
 async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> ResponseUserList:
     # error if passwords are different
-    Service_user(db=db).password_repeat_match(payload.user_password, payload.user_password_repeat)
+    Service_user(db=db).password_repeat_match(password=payload.user_password, password_repeat=payload.user_password_repeat)
 
     # error if not valid password
-    Service_user(db=db).valid_password(payload.user_password)
+    Service_user(db=db).valid_password(password=payload.user_password)
 
     # error if email is registered
     db_user_by_email = await Service_user(db=db).get_by_email(user_email=payload.user_email)
@@ -40,7 +40,7 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
         raise HTTPException(status_code=422, detail="Username already exists")
     
     # create user
-    user = await Service_user(db=db).create(payload)
+    user = await Service_user(db=db).create(payload=payload)
     return ResponseUserList(result=user)
 
 # update user
@@ -61,7 +61,7 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
             raise HTTPException(status_code=400, detail="Username already exists")
         
     # update user
-    user = await Service_user(db=db).update_user(user_id, payload)
+    user = await Service_user(db=db).update_user(user_id=user_id, payload=payload)
     return ResponseUserList(result=user)
 
 # delete user
@@ -70,4 +70,4 @@ async def delete_user(user_id: int, db: Database = Depends(get_db)) -> None:
     # check if user exists
     await Service_user(db=db).get_by_id(user_id=user_id)
     # delete user
-    await Service_user(db=db).delete_user(user_id)
+    await Service_user(db=db).delete_user(user_id=user_id)

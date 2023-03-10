@@ -39,7 +39,7 @@ class Service_user:
         return UserList(**user)
 
     async def create(self, payload:SignUp) -> UserList:
-        hashed_password = Hasher.get_password_hash(payload.user_password)
+        hashed_password = Hasher.get_password_hash(password=payload.user_password)
         query = insert(User).values(
             user_email = payload.user_email,
             user_password = hashed_password,
@@ -84,7 +84,7 @@ class Service_user:
         changed_values = {x[0]:x[1] for x in payload if x[1]}
         #hash password if changed
         if "user_password" in changed_values:
-            changed_values['user_password'] = Hasher.get_password_hash(changed_values["user_password"])
+            changed_values['user_password'] = Hasher.get_password_hash(password=changed_values["user_password"])
             del changed_values['user_password_repeat']
         # if nothing changed
         if changed_values == {}:
