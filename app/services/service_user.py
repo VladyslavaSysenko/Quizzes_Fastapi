@@ -24,22 +24,22 @@ class Service_user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserList(**user)
 
-    async def get_by_email(self, user_email: int) -> UserList | None:
+    async def get_by_email(self, user_email: int) -> UserSchema | None:
         query = select(User).where(User.user_email == user_email)
         user = await self.db.fetch_one(query)
         if not user:
             return None
-        return UserList(**user)
+        return UserSchema(**user)
 
-    async def get_by_username(self, user_username: int) -> UserList | None:
+    async def get_by_username(self, user_username: int) -> UserSchema | None:
         query = select(User).where(User.user_username == user_username)
         user = await self.db.fetch_one(query)
         if not user:
             return None
-        return UserList(**user)
+        return UserSchema(**user)
 
     async def create(self, payload:SignUp) -> UserList:
-        hashed_password = Hasher.get_password_hash(payload.user_password)
+        hashed_password = Hasher.get_password_hash(password=payload.user_password)
         query = insert(User).values(
             user_email = payload.user_email,
             user_password = hashed_password,
@@ -84,7 +84,7 @@ class Service_user:
         changed_values = {x[0]:x[1] for x in payload if x[1]}
         #hash password if changed
         if "user_password" in changed_values:
-            changed_values['user_password'] = Hasher.get_password_hash(changed_values["user_password"])
+            changed_values['user_password'] = Hasher.get_password_hash(password=changed_values["user_password"])
             del changed_values['user_password_repeat']
         # if nothing changed
         if changed_values == {}:

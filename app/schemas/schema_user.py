@@ -22,6 +22,14 @@ class UsersList(BaseModel):
 class User(UserList):
     user_password: str
 
+# token
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# response token
+class ResponseToken(BaseModel):
+    result: Token
 
 # let user in
 class SignIn(BaseModel):
@@ -30,15 +38,13 @@ class SignIn(BaseModel):
 
     class Config:
         orm_mode = True
-
-
+        
 # create user
 class SignUp(SignIn):
-    user_username: str
-    user_first_name: str
-    user_last_name: str
-    user_password_repeat: str
-
+    user_username: str | None = None
+    user_first_name: str | None = None
+    user_last_name: str | None = None
+    user_password_repeat: str | None = None
 
 # update user
 class UserUpdate(BaseModel):

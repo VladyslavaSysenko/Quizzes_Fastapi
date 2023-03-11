@@ -23,3 +23,11 @@ class DB_TEST:
     TEST_HOST = os.environ["TEST_HOST"]
     TEST_PORT = os.environ["TEST_PORT"]
     db_url_test = f"postgresql+asyncpg://{TEST_USERNAME}:{TEST_PASSWORD}@{TEST_HOST}:{DB.POSTGRES_PORT}/{TEST_DB}"
+
+class AUTH0:
+    DOMAIN = os.environ["DOMAIN"]
+    API_AUDIENCE = os.environ["API_AUDIENCE"]
+    ALGORITHMS = os.environ["ALGORITHMS"]
+    ISSUER = os.environ["ISSUER"]
+    SECRET_KEY = os.environ["SECRET_KEY"]
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"])
