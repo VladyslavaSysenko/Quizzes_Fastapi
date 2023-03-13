@@ -19,7 +19,7 @@ class UsersList(BaseModel):
         orm_mode = True
 
 # user
-class User(UserList):
+class UserSchema(UserList):
     user_password: str
 
 # let user in

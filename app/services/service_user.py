@@ -1,5 +1,4 @@
-from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList
-from schemas.schema_user import User as UserSchema
+from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList, UserSchema
 from db.models import User
 from utils.password_hasher import Hasher
 from fastapi import HTTPException, status

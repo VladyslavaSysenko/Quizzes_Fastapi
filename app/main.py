@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 import uvicorn
 from core import connections, system_config
-from routers import router_user, router_auth
+from routers import router_user, router_auth, router_company
 from core.connections import get_db
-from fastapi import Depends
+
 app = FastAPI()
 
 
@@ -28,6 +28,7 @@ async def root():
 
 app.include_router(router_user.router, prefix="", tags=["users"])
 app.include_router(router_auth.router, prefix="/auth", tags=["auth"])
+app.include_router(router_company.router, prefix="", tags=["company"])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=system_config.app_host, port=system_config.app_port, reload=True)

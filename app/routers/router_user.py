@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from services.service_user import Service_user
 from services.service_auth import get_current_user
-from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList, ResponseUserList, ResponseUsersList
-from schemas.schema_user import User as UserSchema
+from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList, ResponseUserList, ResponseUsersList, UserSchema
 from core.connections import get_db
 from databases import Database
 
@@ -16,7 +15,7 @@ async def get_all_users(db: Database = Depends(get_db), user: UserList = Depends
     return ResponseUsersList(result=users)
 
 # get user
-@router.get("/user", response_model=ResponseUserList, status_code=200)
+@router.get("/user/{user_id}", response_model=ResponseUserList, status_code=200)
 async def get_user(user_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUserList:
     user = await Service_user(db=db).get_by_id(user_id=user_id)
     return ResponseUserList(result=user)
@@ -40,9 +39,9 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
     return ResponseUserList(result=user)
 
 # update user
-@router.put("/user", response_model=ResponseUserList, status_code=200)
+@router.put("/user/{user_id}", response_model=ResponseUserList, status_code=200)
 async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUserList:
-     # check if user tries to delete itself
+     # check if user tries to update itself
     if user.user_id != user_id:
         raise HTTPException(status_code=403, detail="It's not your account")
     
@@ -56,7 +55,7 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
     return ResponseUserList(result=user)
 
 # delete user
-@router.delete("/user", status_code=200)
+@router.delete("/user/{user_id}", status_code=200)
 async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> None:
     # check if user tries to delete itself
     if user.user_id != user_id:
