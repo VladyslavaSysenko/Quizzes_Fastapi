@@ -24,19 +24,12 @@ class Service_user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserList(**user)
 
-    async def get_by_email(self, user_email: int) -> UserList | None:
+    async def get_by_email(self, user_email: int) -> UserSchema | None:
         query = select(User).where(User.user_email == user_email)
         user = await self.db.fetch_one(query)
         if not user:
             return None
-        return UserList(**user)
-
-    async def get_by_username(self, user_username: int) -> UserList | None:
-        query = select(User).where(User.user_username == user_username)
-        user = await self.db.fetch_one(query)
-        if not user:
-            return None
-        return UserList(**user)
+        return UserSchema(**user)
 
     async def create(self, payload:SignUp) -> UserList:
         hashed_password = Hasher.get_password_hash(password=payload.user_password)
