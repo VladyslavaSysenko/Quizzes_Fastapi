@@ -22,15 +22,6 @@ class UsersList(BaseModel):
 class User(UserList):
     user_password: str
 
-# token
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-# response token
-class ResponseToken(BaseModel):
-    result: Token
-
 # let user in
 class SignIn(BaseModel):
     user_email: EmailStr

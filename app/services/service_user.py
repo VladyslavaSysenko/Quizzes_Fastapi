@@ -31,13 +31,6 @@ class Service_user:
             return None
         return UserSchema(**user)
 
-    async def get_by_username(self, user_username: int) -> UserSchema | None:
-        query = select(User).where(User.user_username == user_username)
-        user = await self.db.fetch_one(query)
-        if not user:
-            return None
-        return UserSchema(**user)
-
     async def create(self, payload:SignUp) -> UserList:
         hashed_password = Hasher.get_password_hash(password=payload.user_password)
         query = insert(User).values(

@@ -34,11 +34,6 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
     if db_user_by_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # error if username exists
-    db_user_by_username = await Service_user(db=db).get_by_username(user_username=payload.user_username)
-    if db_user_by_username:
-        raise HTTPException(status_code=422, detail="Username already exists")
-    
     # create user
     user = await Service_user(db=db).create(payload=payload)
     return ResponseUserList(result=user)
@@ -53,12 +48,6 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
     if payload.user_password and payload.user_password_repeat:
         if payload.user_password != payload.user_password_repeat:
             raise HTTPException(status_code=400, detail="Passwords do not match")
-        
-    # error if username exists
-    if payload.user_username:
-        db_user_by_username = await Service_user(db=db).get_by_username(user_username=payload.user_username)
-        if db_user_by_username and db_user_by_username.user_id != user_id:
-            raise HTTPException(status_code=400, detail="Username already exists")
         
     # update user
     user = await Service_user(db=db).update_user(user_id=user_id, payload=payload)
