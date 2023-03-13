@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from services.service_user import Service_user
+from services.service_auth import get_current_user
 from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList, ResponseUserList, ResponseUsersList
 from schemas.schema_user import User as UserSchema
 from core.connections import get_db
@@ -10,13 +11,13 @@ router =  APIRouter()
 
 # get all users
 @router.get("/users", response_model=ResponseUsersList, status_code=200)
-async def get_all_users(db: Database = Depends(get_db)) -> ResponseUsersList:
+async def get_all_users(db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUsersList:
     users = await Service_user(db=db).get_all()
     return ResponseUsersList(result=users)
 
 # get user
 @router.get("/user", response_model=ResponseUserList, status_code=200)
-async def get_user(user_id: int, db: Database = Depends(get_db)) -> ResponseUserList:
+async def get_user(user_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUserList:
     user = await Service_user(db=db).get_by_id(user_id=user_id)
     return ResponseUserList(result=user)
 
@@ -40,9 +41,10 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
 
 # update user
 @router.put("/user", response_model=ResponseUserList, status_code=200)
-async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db)) -> ResponseUserList:
-    # check if user exists
-    user = await Service_user(db=db).get_by_id(user_id=user_id)
+async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUserList:
+     # check if user tries to delete itself
+    if user.user_id != user_id:
+        raise HTTPException(status_code=403, detail="It's not your account")
     
     # error if passwords are different
     if payload.user_password and payload.user_password_repeat:
@@ -55,8 +57,10 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
 
 # delete user
 @router.delete("/user", status_code=200)
-async def delete_user(user_id: int, db: Database = Depends(get_db)) -> None:
-    # check if user exists
-    await Service_user(db=db).get_by_id(user_id=user_id)
+async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> None:
+    # check if user tries to delete itself
+    if user.user_id != user_id:
+        raise HTTPException(status_code=403, detail="It's not your account")
+    
     # delete user
     await Service_user(db=db).delete_user(user_id=user_id)
