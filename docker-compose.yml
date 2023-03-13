@@ -1,30 +1,29 @@
-version: "3"
+version: "3.8"
 services:
   app:
-    build: .
+    container_name: app
+    image: app_image
     env_file:
       - .env
+    build: .
     volumes:
       - .:/code
-    container_name: app_container
     ports:
       - '${APP_PORT}:${APP_PORT}'
     depends_on:
       - postgres
       - redis
+
   postgres:
     image: postgres:15
     container_name: postgres
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USERNAME}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     env_file:
       - .env
     volumes:
-      - postgres-data:/var/lib/postgresql/data/
+      - postgres-data:/var/lib/postgresql/data
+
   redis:
     image: redis
     container_name: redis
@@ -32,6 +31,22 @@ services:
       - "${REDIS_PORT}:${REDIS_PORT}"
     volumes:
       - redis:/data
+
+  test_db:
+    image: postgres:15
+    container_name: test_db
+    ports:
+      - "${TEST_PORT}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_HOST=${TEST_HOST}
+      - POSTGRES_DB=${TEST_DB}
+      - POSTGRES_USER=${TEST_USERNAME}
+      - POSTGRES_PASSWORD=${TEST_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - test_db-data:/var/lib/postgresql/data/
+
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -39,13 +54,16 @@ services:
       - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
       - PGADMIN_DEFAULT_PASSWORD=admin
     ports:
-      - "8080:80"
+      - "5050:80"
     depends_on:
       - postgres
-    volumes:
-     - pgadmin-data:/var/lib/pgadmin
 
 volumes:
   postgres-data:
+    driver: "local"
   redis:
-  pgadmin-data:
+  test_db-data:
+
+networks:
+  default:
+    name: app_main
