@@ -3,7 +3,6 @@ import uvicorn
 from core import connections, system_config
 from routers import router_user, router_auth, router_company
 from core.connections import get_db
-
 app = FastAPI()
 
 
