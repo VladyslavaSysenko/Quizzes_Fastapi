@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from services.service_user import Service_user
 from services.service_auth import get_current_user
 from schemas.schema_user import SignIn, SignUp, UserList, UserUpdate, UsersList, ResponseUserList, ResponseUsersList, UserSchema
@@ -32,7 +32,7 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
     # error if email is registered
     db_user_by_email = await Service_user(db=db).get_by_email(user_email=payload.user_email)
     if db_user_by_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     
     # create user
     user = await Service_user(db=db).create(payload=payload)
@@ -41,14 +41,13 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
 # update user
 @router.put("/user/{user_id}", response_model=ResponseUserList, status_code=200)
 async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseUserList:
-     # check if user tries to update itself
-    if user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="It's not your account")
+    # check if user tries to update itself
+    Service_user(db=db).check_id(user=user, user_id=user_id)
     
     # error if passwords are different
     if payload.user_password and payload.user_password_repeat:
         if payload.user_password != payload.user_password_repeat:
-            raise HTTPException(status_code=400, detail="Passwords do not match")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
         
     # update user
     user = await Service_user(db=db).update_user(user_id=user_id, payload=payload)
@@ -58,8 +57,7 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
 @router.delete("/user/{user_id}", status_code=200)
 async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> None:
     # check if user tries to delete itself
-    if user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="It's not your account")
+    Service_user(db=db).check_id(user=user, user_id=user_id)
     
     # delete user
     await Service_user(db=db).delete_user(user_id=user_id)
