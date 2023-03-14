@@ -61,7 +61,7 @@ class Service_user:
 
     async def delete_user(self, user_id: int) -> status:
         # check if user tries to delete itself
-        self.check_id(user=self.user, user_id=user_id)
+        self.check_id(user_id=user_id)
         # delete user
         query = delete(User).where(User.user_id == user_id)
         await self.db.execute(query)
@@ -70,7 +70,7 @@ class Service_user:
 
     async def update_user(self, user_id: int, payload:UserUpdate) -> UserList:
         # check if user tries to delete itself
-        self.check_id(user=self.user, user_id=user_id)
+        self.check_id(user_id=user_id)
 
         # error if passwords are different or empty
         if payload.user_password and payload.user_password_repeat and payload.user_password != payload.user_password_repeat:
@@ -109,7 +109,7 @@ class Service_user:
         return changed_values
     
 
-    def check_id(self, user: UserList, user_id: str) -> status:
-        if user.user_id != user_id:
+    def check_id(self, user_id: str) -> status:
+        if self.user.user_id != user_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your account")
         return status.HTTP_200_OK

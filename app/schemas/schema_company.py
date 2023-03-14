@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from schemas.schema_user import UserList
 
 # create company
 class CreateCompany(BaseModel):
