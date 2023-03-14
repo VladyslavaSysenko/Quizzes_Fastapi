@@ -21,7 +21,7 @@ class Service_user:
         query = select(User).where(User.user_id == user_id)
         user = await self.db.fetch_one(query)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return UserList(**user)
 
     async def get_by_email(self, user_email: int) -> UserSchema | None:
@@ -42,7 +42,7 @@ class Service_user:
         ).returning(User)
         user = await self.db.fetch_one(query)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return UserList(**user)
 
     async def delete_user(self, user_id: int) -> status:
@@ -52,7 +52,7 @@ class Service_user:
         query = select(User).where(User.user_id == user_id)
         user = await self.db.fetch_one(query)
         if user:
-            raise HTTPException(status_code=500, detail="Something went wrong")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong")
         return status.HTTP_200_OK
 
     async def update_user(self, user_id: int, payload:UserUpdate) -> UserList:
@@ -65,12 +65,12 @@ class Service_user:
             
     def valid_password(self, password) -> str:
         if len(password) < 4:
-            raise HTTPException(status_code=422, detail="Password must be 4+ characters long.")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be 4+ characters long.")
         return password
 
     def password_repeat_match(self, password: str, password_repeat: str) -> str:
         if password != password_repeat:
-            raise HTTPException(status_code=422, detail="Passwords do not match")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Passwords do not match")
         return password_repeat
 
     def get_changed_values(self, payload:UserUpdate) -> dict:
@@ -81,5 +81,10 @@ class Service_user:
             del changed_values['user_password_repeat']
         # if nothing changed
         if changed_values == {}:
-            raise HTTPException(status_code=400, detail="Nothing to change")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
         return changed_values
+    
+    def check_id(self, user: UserList, user_id: str) -> status:
+        if user.user_id != user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your account")
+        return status.HTTP_200_OK
