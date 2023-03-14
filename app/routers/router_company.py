@@ -24,7 +24,7 @@ async def get_company(company_id: int, db: Database = Depends(get_db), user: Use
 # create company
 @router.post("/company", response_model=ResponseCompanySchema, status_code=201)
 async def sign_up_company(payload: CreateCompany, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseCompanySchema:
-    # if no name
+    # error if no name
     if payload.company_name == "":
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No name provided")
     company = await Service_company(db=db).create(payload=payload, owner_id=user.user_id)
@@ -33,10 +33,11 @@ async def sign_up_company(payload: CreateCompany, db: Database = Depends(get_db)
 # update company
 @router.put("/company/{company_id}", response_model=ResponseCompanySchema, status_code=200)
 async def update_company(company_id: int, payload: CompanyUpdate, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> ResponseCompanySchema:
+    # check if company exists
     company = await Service_company(db=db).get_by_id(company_id=company_id)
+   
     # check if user tries to update his company
-    if user.user_id != company.company_owner_id:
-        raise HTTPException(status_code=403, detail="It's not your company")
+    Service_company(db=db).check_id(user=user, company=company)
     
     # update company
     company = await Service_company(db=db).update_company(company_id=company_id, payload=payload)
@@ -45,10 +46,11 @@ async def update_company(company_id: int, payload: CompanyUpdate, db: Database =
 # delete company
 @router.delete("/company/{company_id}", status_code=200)
 async def delete_company(company_id: int, db: Database = Depends(get_db), user: UserList = Depends(get_current_user)) -> None:
+    # check if company exists
     company = await Service_company(db=db).get_by_id(company_id=company_id)
+
     # check if user tries to delete his company
-    if user.user_id != company.company_owner_id:
-        raise HTTPException(status_code=403, detail="It's not your company")
+    Service_company(db=db).check_id(user=user, company=company)
     
     # delete company
     await Service_company(db=db).delete_company(company_id=company_id)
