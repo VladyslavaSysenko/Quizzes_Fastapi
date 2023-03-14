@@ -31,9 +31,5 @@ async def login(payload: SignIn, db: Database = Depends(get_db)) -> ResponseToke
     )
 
 @router.get("/me", response_model=ResponseUserList, status_code=200)
-async def user_info(user: UserList = Depends(get_current_user), db: Database = Depends(get_db)) -> ResponseUserList:
-    # create user by email if does not exist
-    if user.user_id is None:
-        user = await Service_auth(db=db).create_user_by_email(user_email=user.user_email, db=db)
-        return ResponseUserList(result=user)
-    return ResponseUserList(result=user)
+async def user_info(user_response: UserList = Depends(get_current_user)) -> ResponseUserList:
+    return ResponseUserList(result=user_response)
