@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from schemas.schema_user import User as UserSchema
+from schemas.schema_user import UserSchemaFull
 
 # token
 class Token(BaseModel):
@@ -12,5 +12,5 @@ class ResponseToken(BaseModel):
 
 # response user by token
 class ResponseUserByToken(BaseModel):
-    user: UserSchema
+    user: UserSchemaFull
     user_email: EmailStr

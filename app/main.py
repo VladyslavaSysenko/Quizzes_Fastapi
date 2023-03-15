@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 import uvicorn
 from core import connections, system_config
 from routers import router_user, router_auth
 from core.connections import get_db
-from fastapi import Depends
 app = FastAPI()
 
 
