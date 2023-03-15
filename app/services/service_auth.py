@@ -39,7 +39,7 @@ class Service_auth:
 
 
     # get user and email by token
-    async def get_user_by_token(self, credentials: str) -> ResponseUserByToken:
+    async def get_user_by_token(self, credentials: str = Depends(security)) -> ResponseUserByToken:
         decoded_token = decode_access_token(token=credentials.credentials)
         try:
             user_email = decoded_token["email"]

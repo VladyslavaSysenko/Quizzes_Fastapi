@@ -16,7 +16,7 @@ async def get_all_users(db: Database = Depends(get_db), user: UserSchema = Depen
     return ResponseUsersList(result=users)
 
 # get user
-@router.get("/user", response_model=ResponseUserSchema, status_code=200)
+@router.get("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)
 async def get_user(user_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUserSchema:
     user = await Service_user(db=db).get_by_id(user_id=user_id)
     return ResponseUserSchema(result=user)
@@ -28,12 +28,12 @@ async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> Respo
     return ResponseUserSchema(result=user)
 
 # update user
-@router.put("/user", response_model=ResponseUserSchema, status_code=200)
+@router.put("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)
 async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUserSchema:
     user = await Service_user(db=db, user=user).update_user(user_id=user_id, payload=payload)
     return ResponseUserSchema(result=user)
 
 # delete user
-@router.delete("/user", status_code=200)
+@router.delete("/user/{user_id}", status_code=200)
 async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
     await Service_user(db=db, user=user).delete_user(user_id=user_id)
