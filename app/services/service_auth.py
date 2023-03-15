@@ -3,7 +3,7 @@ from utils.password_hasher import Hasher
 from services.service_user import Service_user
 from databases import Database
 from schemas.schema_auth import ResponseUserByToken, Token
-from schemas.schema_user import SignUp, UserList, SignIn
+from schemas.schema_user import SignUp, UserSchema, SignIn
 from utils.password_hasher import random_password
 from fastapi import Depends, status, HTTPException
 from fastapi.security import HTTPBearer
@@ -13,7 +13,7 @@ security = HTTPBearer()
 
 
 # get authorized user by token
-async def get_current_user(db:Database = Depends(get_db), credentials: str = Depends(security)) -> UserList:
+async def get_current_user(db:Database = Depends(get_db), credentials: str = Depends(security)) -> UserSchema:
     decoded_token = decode_access_token(token=credentials.credentials)
     try:
         user_email = decoded_token["email"]
@@ -22,14 +22,14 @@ async def get_current_user(db:Database = Depends(get_db), credentials: str = Dep
     user = await Service_user(db=db).get_by_email(user_email=user_email)
     # create user
     if user is None:
+        random_pass = random_password()
         await Service_user(db=db).create(payload=
                 SignUp(user_email=user_email,
-                    user_password=random_password(),
-                    user_username="User",
-                    user_first_name=None,
-                    user_last_name=None))
+                    user_password=random_pass,
+                    user_password_repeat=random_pass,
+                    user_username="User"))
         user = await Service_user(db=db).get_by_email(user_email=user_email)
-    return UserList(**user.dict())
+    return UserSchema(**user.dict())
 
 
 class Service_auth:

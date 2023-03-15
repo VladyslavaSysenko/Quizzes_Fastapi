@@ -1,5 +1,5 @@
 from schemas.schema_company import CompaniesList, CompanySchema, CreateCompany, CompanyUpdate
-from schemas.schema_user import UserList
+from schemas.schema_user import UserSchema
 from db.models import Company
 from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete, update
@@ -7,7 +7,7 @@ from databases import Database
 
 class Service_company:
     
-    def __init__(self, db: Database, user: UserList = None) -> None:
+    def __init__(self, db: Database, user: UserSchema = None) -> None:
         self.db = db
         self.user = user
 

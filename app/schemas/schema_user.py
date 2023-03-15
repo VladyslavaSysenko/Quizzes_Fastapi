@@ -2,24 +2,25 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 # return user
-class UserList(BaseModel):
-    user_id: int | None = None
-    user_username: str | None = None
-    user_first_name: str | None = None
-    user_last_name: str | None = None
-    user_email: EmailStr | None = None
-    created_at: datetime | None = None
+class UserSchema(BaseModel):
+    user_id: int
+    user_username: str
+    user_first_name: str | None
+    user_last_name: str | None
+    user_email: EmailStr
+    created_at: datetime
 
     class Config:
         orm_mode = True
 
 class UsersList(BaseModel):
-    users: list[UserList]
+    users: list[UserSchema]
+
     class Config:
         orm_mode = True
 
 # user
-class UserSchema(UserList):
+class UserSchemaFull(UserSchema):
     user_password: str
 
 # let user in
@@ -32,10 +33,10 @@ class SignIn(BaseModel):
         
 # create user
 class SignUp(SignIn):
-    user_username: str | None = None
+    user_username: str
     user_first_name: str | None = None
     user_last_name: str | None = None
-    user_password_repeat: str | None = None
+    user_password_repeat: str
 
 # update user
 class UserUpdate(BaseModel):
@@ -49,8 +50,8 @@ class UserUpdate(BaseModel):
         orm_mode = True
 
 # response user
-class ResponseUserList(BaseModel):
-    result: UserList
+class ResponseUserSchema(BaseModel):
+    result: UserSchema
 
 # response users
 class ResponseUsersList(BaseModel):
