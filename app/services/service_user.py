@@ -1,4 +1,4 @@
-from schemas.schema_user import SignUp, UserList, UserUpdate, UsersList, UserSchema
+from schemas.schema_user import SignUp, UserSchema, UserUpdate, UsersList, UserSchemaFull
 from db.models import User
 from utils.password_hasher import Hasher
 from fastapi import HTTPException, status
@@ -7,7 +7,7 @@ from databases import Database
 
 class Service_user:
     
-    def __init__(self, db: Database, user: UserList = None) -> None:
+    def __init__(self, db: Database, user: UserSchema = None) -> None:
         self.db = db
         self.user = user
 
@@ -18,28 +18,25 @@ class Service_user:
         return UsersList(users=users)
 
 
-    async def get_by_id(self, user_id: int) -> UserList:
+    async def get_by_id(self, user_id: int) -> UserSchema:
         query = select(User).where(User.user_id == user_id)
         user = await self.db.fetch_one(query)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        return UserList(**user)
+        return UserSchema(**user)
 
 
-    async def get_by_email(self, user_email: int) -> UserSchema | None:
+    async def get_by_email(self, user_email: int) -> UserSchemaFull | None:
         query = select(User).where(User.user_email == user_email)
         user = await self.db.fetch_one(query)
         if not user:
             return None
-        return UserSchema(**user)
+        return UserSchemaFull(**user)
 
 
-    async def create(self, payload:SignUp) -> UserList:
-        # error if passwords are different
-        self.password_repeat_match(password=payload.user_password, password_repeat=payload.user_password_repeat)
-
-        # error if not valid password
-        self.valid_password(password=payload.user_password)
+    async def create(self, payload:SignUp) -> UserSchema:
+        # error if not valid passwords or do not match
+        self.check_password(password=payload.user_password, password_repeat=payload.user_password_repeat)
 
         # error if email is registered
         db_user_by_email = await self.get_by_email(user_email=payload.user_email)
@@ -56,7 +53,7 @@ class Service_user:
             user_last_name = payload.user_last_name
         ).returning(User)
         user = await self.db.fetch_one(query)
-        return UserList(**user)
+        return UserSchema(**user)
 
 
     async def delete_user(self, user_id: int) -> status:
@@ -68,13 +65,13 @@ class Service_user:
         return status.HTTP_200_OK
 
 
-    async def update_user(self, user_id: int, payload:UserUpdate) -> UserList:
+    async def update_user(self, user_id: int, payload:UserUpdate) -> UserSchema:
         # check if user tries to delete itself
         self.check_id(user=self.user, user_id=user_id)
 
-        # error if passwords are different or empty
-        if payload.user_password and payload.user_password_repeat and payload.user_password != payload.user_password_repeat:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
+        # error if not valid passwords or do not match
+        if payload.user_password or payload.user_password_repeat:
+            self.check_password(password=payload.user_password, password_repeat=payload.user_password_repeat)
         
         # update user
         changed_values = self.get_changed_values(payload=payload)
@@ -82,19 +79,14 @@ class Service_user:
             changed_values
         ).returning(User)
         user = await self.db.fetch_one(query)
-        return UserList(**user)
+        return UserSchema(**user)
             
-
-    def valid_password(self, password) -> str:
+    def check_password(self, password: str, password_repeat: str) -> str:
+        if password != password_repeat:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Passwords do not match")
         if len(password) < 4:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be 4+ characters long.")
         return password
-
-
-    def password_repeat_match(self, password: str, password_repeat: str) -> str:
-        if password != password_repeat:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Passwords do not match")
-        return password_repeat
 
 
     def get_changed_values(self, payload:UserUpdate) -> dict:
@@ -109,7 +101,7 @@ class Service_user:
         return changed_values
     
 
-    def check_id(self, user: UserList, user_id: str) -> status:
+    def check_id(self, user: UserSchema, user_id: str) -> status:
         if user.user_id != user_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your account")
         return status.HTTP_200_OK
