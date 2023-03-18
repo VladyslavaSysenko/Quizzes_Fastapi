@@ -24,9 +24,11 @@ class MembershipsList(BaseModel):
 
 # response membership
 class ResponseMembershipSchema(BaseModel):
-    result: MembershipSchema
+    result: MembershipSchema | None
+    detail: str | None
 
 
 # response memberships
 class ResponseMembershipsList(BaseModel):
-    result: MembershipsList
+    result: MembershipsList | None
+    detail: str | None
