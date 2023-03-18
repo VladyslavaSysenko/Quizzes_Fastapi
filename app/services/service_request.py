@@ -1,7 +1,8 @@
 from schemas.schema_request import RequestsList, RequestSchema, CreateRequest
 from schemas.schema_user import UserSchema
 from services.service_company import Service_company
-from db.models import Request, Membership
+from services.service_membership import Service_membership
+from db.models import Request
 from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete
 from databases import Database
@@ -15,7 +16,7 @@ class Service_request:
     
 
     async def get_company_requests(self) -> RequestsList:
-        await Service_company(db=self.db, user=self.user).check_id(company_id=self.company_id)
+        await Service_company(db=self.db, user=self.user, company_id=self.company_id).check_id()
         query = select(Request).where(Request.request_to_company_id == self.company_id)
         requests = await self.db.fetch_all(query)
         return RequestsList(requests=requests)
@@ -42,9 +43,9 @@ class Service_request:
         # check if to company exists
         await Service_company(db=self.db, user=self.user).get_by_id(company_id=payload.request_to_company_id)
         # check if user not member
-        await self.is_member(company_id=payload.request_to_company_id)
+        await self.is_member()
         # check if request already exists
-        await self.request_exists(company_id=payload.request_to_company_id)
+        await self.request_exists()
         # create request
         query = insert(Request).values(
             request_from_user_id = self.user.user_id,
@@ -56,49 +57,47 @@ class Service_request:
 
 
     async def delete_request(self, request_id: int) -> status:
-        request = await self.get_by_id(request_id=request_id)
+        await self.get_by_id(request_id=request_id)
         # check if user's request
         await self.check_request_id(request_id=request_id)
         # delete request
-        delete(Request).where(Request.request_id == request_id)
+        query=delete(Request).where(Request.request_id == request_id)
+        await self.db.execute(query)
         return status.HTTP_200_OK
     
 
     async def accept_request(self, request_id: int) -> status:
         request = await self.get_by_id(request_id=request_id)
-        # check if user's company
-        await Service_company(db=self.db, user=self.user).check_id(company_id=request.request_to_company_id)
+        # check if user is admin or owner
+        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).check_id()
         # accept request
-        query=insert(Membership).values(
-            membership_user_id = request.request_from_user_id,
-            membership_company_id = request.request_to_company_id
-        )
-        await self.db.fetch_one(query)
+        await Service_membership(db=self.db, company_id=request.request_to_company_id).create_membership(
+            member_id=request.request_from_user_id, role="user")
+        # delete from requests
+        query=delete(Request).where(Request.request_id == request_id)
+        await self.db.execute(query)
         return status.HTTP_200_OK
 
 
     async def decline_request(self, request_id: int) -> status:
         request = await self.get_by_id(request_id=request_id)
-        # check if user's company
-        await Service_company(db=self.db, user=self.user).check_id(company_id=request.request_to_company_id)
+        # check if user is admin or owner
+        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).check_id()
         # decline request
-        query=delete(Membership).where(
-            Membership.membership_user_id == self.user.user_id,
-            Membership.membership_company_id == request.request_to_company_id
-        )
+        query=delete(Request).where(Request.request_id == request_id)
         await self.db.execute(query)
         return status.HTTP_200_OK
 
 
-    async def is_member(self, company_id: int) -> status:
-        company_members = await Service_company(db=self.db, user=self.user).get_members(company_id=company_id)
+    async def is_member(self) -> status:
+        company_members = await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members()
         if self.user.user_id in [member.membership_user_id for member in company_members.users]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of the company")
         return status.HTTP_200_OK
 
-    async def request_exists(self, company_id: int) -> None:
+    async def request_exists(self) -> None:
         user_requests = await self.get_my()
-        if company_id in [request.request_to_company_id for request in user_requests.requests]:
+        if self.company_id in [request.request_to_company_id for request in user_requests.requests]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request already sent")
         
 

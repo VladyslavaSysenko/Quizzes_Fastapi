@@ -1,9 +1,11 @@
 from pydantic import BaseModel
+from typing import Literal
 
 # create membership
 class CreateMembership(BaseModel):
     membership_user_id: int
     membership_company_id: int
+    membership_role: Literal["owner", "admin", "user"]
 
     class Config:
         orm_mode = True
@@ -22,11 +24,17 @@ class MembershipsList(BaseModel):
         orm_mode = True
 
 
+# add admin
+class AddAdmin(BaseModel):
+    user_id: int
+
 # response membership
 class ResponseMembershipSchema(BaseModel):
-    result: MembershipSchema
+    result: MembershipSchema | None
+    detail: str | None
 
 
 # response memberships
 class ResponseMembershipsList(BaseModel):
-    result: MembershipsList
+    result: MembershipsList | None
+    detail: str | None

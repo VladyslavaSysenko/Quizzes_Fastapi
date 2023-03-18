@@ -53,7 +53,7 @@ async def test_send_invite_not_your_company(ac: AsyncClient, users_tokens):
     }
     response = await ac.post("/invite", json=payload, headers=headers)
     assert response.status_code == 403
-    assert response.json().get('detail') == "It's not your company"
+    assert response.json().get('detail') == "You don't have permission"
 
 
 async def test_send_invite_one_success(ac: AsyncClient, users_tokens):
@@ -159,7 +159,7 @@ async def test_invites_company_one_not_owner(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/invite/company/1", headers=headers)
     assert response.status_code == 403
-    assert response.json().get('detail') == "It's not your company"
+    assert response.json().get('detail') == "You don't have permission"
 
 
 async def test_invites_company_one(ac: AsyncClient, users_tokens):
@@ -203,7 +203,7 @@ async def test_cancel_invite_not_your(ac: AsyncClient, users_tokens):
     }
     response = await ac.delete("/invite/1", headers=headers)
     assert response.status_code == 403
-    assert response.json().get('detail') == "It's not your company"
+    assert response.json().get('detail') == "You don't have permission"
 
 
 async def test_cancel_invite_success(ac: AsyncClient, users_tokens):

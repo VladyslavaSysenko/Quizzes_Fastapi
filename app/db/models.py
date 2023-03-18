@@ -1,5 +1,6 @@
 from sqlalchemy import Integer, String, Column, DateTime, func, ForeignKey
 from sqlalchemy.orm import declarative_base
+from sqlalchemy_utils.types.choice import ChoiceType
 
 Base = declarative_base()
 
@@ -22,9 +23,17 @@ class Company(Base):
 
 class Membership(Base):
     __tablename__ = "membership"
+
+    ROLES = [
+        ("owner", "owner"), 
+        ("admin", "admin"),
+        ("user", "user")
+    ]
+
     membership_id = Column("membership_id", Integer, primary_key=True)
     membership_user_id = Column("membership_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
     membership_company_id = Column("membership_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
+    membership_role = Column("membership_role", ChoiceType(ROLES), server_default=u"user", nullable=False)
 
 class Invite(Base):
     __tablename__ = "invite"
