@@ -28,10 +28,12 @@ class CompanyUpdate(BaseModel):
     class Config:
         orm_mode = True
 
-# response user
+# response company
 class ResponseCompanySchema(BaseModel):
-    result: CompanySchema
+    result: CompanySchema | None
+    detail: str | None
 
-# response users
+# response companies
 class ResponseCompaniesList(BaseModel):
-    result: CompaniesList
+    result: CompaniesList | None
+    detail: str | None

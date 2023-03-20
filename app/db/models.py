@@ -1,5 +1,5 @@
-from sqlalchemy import Integer, String, Column, DateTime, func
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import Integer, String, Column, DateTime, func, ForeignKey
+from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
@@ -17,5 +17,25 @@ class Company(Base):
     __tablename__ = "company"
     company_id = Column("company_id", Integer, primary_key=True)
     company_name = Column("company_name", String, nullable=False)
-    company_owner_id = Column("company_owner_id", Integer, nullable=False)
+    company_owner_id = Column("company_owner_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
     company_description = Column("company_description", String, nullable=True)
+
+class Membership(Base):
+    __tablename__ = "membership"
+    membership_id = Column("membership_id", Integer, primary_key=True)
+    membership_user_id = Column("membership_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
+    membership_company_id = Column("membership_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
+
+class Invite(Base):
+    __tablename__ = "invite"
+    invite_id = Column("invite_id", Integer, primary_key=True)
+    invite_to_user_id = Column("invite_to_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
+    invite_from_company_id = Column("invite_from_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
+    invite_message = Column("invite_message", String, nullable=False)
+
+class Request(Base):
+    __tablename__ = "request"
+    request_id = Column("request_id", Integer, primary_key=True)
+    request_from_user_id = Column("request_from_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
+    request_to_company_id = Column("request_to_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
+    request_message = Column("request_message", String, nullable=False)

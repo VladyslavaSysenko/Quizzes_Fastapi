@@ -115,6 +115,7 @@ async def test_create_user_five(ac: AsyncClient):
     assert response.status_code == 200
     assert response.json().get("result").get("user_id") == 5
 
+
 # =================================
 
 
@@ -184,6 +185,7 @@ async def test_bad_auth_me(ac: AsyncClient):
     }
     response = await ac.get("/auth/me", headers=headers)
     assert response.status_code == 401
+
 
 # =====================================================
 
