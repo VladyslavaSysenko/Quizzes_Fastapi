@@ -1,8 +1,8 @@
 from schemas.schema_user import UserSchema
-from schemas.schema_membership import MembershipsList
+from schemas.schema_membership import MembershipsList, MembershipSchema
 from db.models import Membership
 from fastapi import status
-from sqlalchemy import select, insert, delete
+from sqlalchemy import select, insert, delete, update
 from databases import Database
 
 class Service_membership:
@@ -12,8 +12,11 @@ class Service_membership:
         self.company_id = company_id
 
 
-    async def get_members(self) -> MembershipsList:
-        query = select(Membership).where(Membership.membership_company_id == self.company_id)
+    async def get_members(self, role: str = None) -> MembershipsList:
+        if role:
+            query = select(Membership).where(Membership.membership_company_id == self.company_id, Membership.membership_role == role)
+        else:
+            query = select(Membership).where(Membership.membership_company_id == self.company_id)
         members = await self.db.fetch_all(query)
         return MembershipsList(users=members)
 
@@ -28,10 +31,21 @@ class Service_membership:
         return status.HTTP_200_OK
 
 
-    async def create_membership(self, member_id:int) -> status:
+    async def create_membership(self, member_id:int, role: str) -> status:
         query=insert(Membership).values(
             membership_user_id = member_id,
-            membership_company_id = self.company_id
+            membership_company_id = self.company_id,
+            membership_role = role
         )
         await self.db.execute(query)
         return status.HTTP_201_CREATED
+    
+
+    async def change_membership(self, member_id:int, role: str) -> MembershipSchema:
+        query = update(Membership).where(
+            Membership.membership_user_id == member_id, 
+            Membership.membership_company_id == self.company_id).values(
+                membership_role = role
+                ).returning(Membership)
+        membership = await self.db.fetch_one(query)
+        return MembershipSchema(**membership)
