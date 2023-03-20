@@ -40,7 +40,7 @@ async def create_invite(payload: CreateInvite, db: Database = Depends(get_db), u
     return ResponseInviteSchema(result=invite, detail="success")
 
 # cancel company invite
-@router.delete("/invite/{invite_id}", status_code=200)
-async def delete_invite(invite_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/invite/{invite_id}", response_model=ResponseInviteSchema, status_code=200)
+async def delete_invite(invite_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseInviteSchema:
     await Service_invite(db=db, user=user).delete_invite(invite_id=invite_id)
     return ResponseInviteSchema(detail="success")

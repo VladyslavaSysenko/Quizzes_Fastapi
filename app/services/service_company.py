@@ -91,7 +91,7 @@ class Service_company:
         return status.HTTP_200_OK
         
         
-    def get_changed_values(self, payload:CompanyUpdate) -> dict:
+    def get_changed_values(self, payload:CompanyUpdate) -> CompanyUpdate:
         changed_values = {x[0]:x[1] for x in payload if x[1]}
         # if nothing changed
         if changed_values == {}:

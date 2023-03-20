@@ -30,8 +30,10 @@ class CompanyUpdate(BaseModel):
 
 # response company
 class ResponseCompanySchema(BaseModel):
-    result: CompanySchema
+    result: CompanySchema | None
+    detail: str | None
 
 # response companies
 class ResponseCompaniesList(BaseModel):
-    result: CompaniesList
+    result: CompaniesList | None
+    detail: str | None

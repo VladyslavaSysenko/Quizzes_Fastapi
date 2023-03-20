@@ -3,7 +3,7 @@ from services.service_company import Service_company
 from services.service_auth import get_current_user
 from schemas.schema_user import UserSchema
 from schemas.schema_company import CreateCompany, CompanyUpdate, ResponseCompaniesList, ResponseCompanySchema
-from schemas.schema_membership import ResponseMembershipsList
+from schemas.schema_membership import ResponseMembershipsList, ResponseMembershipSchema
 from core.connections import get_db
 from databases import Database
 
@@ -35,9 +35,10 @@ async def update_company(company_id: int, payload: CompanyUpdate, db: Database =
     return ResponseCompanySchema(result=company)
 
 # delete company
-@router.delete("/company/{company_id}", status_code=200)
-async def delete_company(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/company/{company_id}", response_model=ResponseCompanySchema, status_code=200)
+async def delete_company(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseCompanySchema:
     await Service_company(db=db, user=user, company_id=company_id).delete_company()
+    return ResponseCompanySchema(detail="success")
 
 # get all members
 @router.get("/company/{company_id}/members", response_model=ResponseMembershipsList, status_code=200)
@@ -46,11 +47,13 @@ async def get_members(company_id: int, db: Database = Depends(get_db), user: Use
     return ResponseMembershipsList(result=users)
 
 # delete member
-@router.delete("/company/{company_id}/member/{member_id}", status_code=200)
-async def get_members(company_id: int, member_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/company/{company_id}/member/{member_id}", response_model=ResponseMembershipSchema, status_code=200)
+async def get_members(company_id: int, member_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipSchema:
     await Service_company(db=db, user=user, company_id=company_id).delete_member(member_id=member_id)
+    return ResponseMembershipSchema(detail="success")
 
 # leave company
-@router.delete("/company/{company_id}/leave", status_code=200)
-async def get_members(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/company/{company_id}/leave", response_model=ResponseCompanySchema, status_code=200)
+async def get_members(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseCompanySchema:
     await Service_company(db=db, user=user, company_id=company_id).leave_company()
+    return ResponseCompanySchema(detail="success")

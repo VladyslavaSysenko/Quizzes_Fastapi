@@ -40,7 +40,7 @@ async def create_request(payload: CreateRequest, db: Database = Depends(get_db),
     return ResponseRequestSchema(result=request, detail="success")
 
 # cancel my request
-@router.delete("/request/{request_id}", status_code=200)
-async def delete_request(request_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/request/{request_id}", response_model=ResponseRequestSchema, status_code=200)
+async def delete_request(request_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseRequestSchema:
     await Service_request(db=db, user=user).delete_request(request_id=request_id)
     return ResponseRequestSchema(detail="success")

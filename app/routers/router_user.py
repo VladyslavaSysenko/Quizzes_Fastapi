@@ -34,6 +34,7 @@ async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(
     return ResponseUserSchema(result=user)
 
 # delete user
-@router.delete("/user/{user_id}", status_code=200)
-async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> None:
+@router.delete("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)
+async def delete_user(user_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUserSchema:
     await Service_user(db=db, user=user).delete_user(user_id=user_id)
+    return ResponseUserSchema(detail="success")

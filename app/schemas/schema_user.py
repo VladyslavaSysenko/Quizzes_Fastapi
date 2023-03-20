@@ -51,8 +51,10 @@ class UserUpdate(BaseModel):
 
 # response user
 class ResponseUserSchema(BaseModel):
-    result: UserSchema
+    result: UserSchema | None
+    detail: str | None
 
 # response users
 class ResponseUsersList(BaseModel):
-    result: UsersList
+    result: UsersList | None
+    detail: str | None
