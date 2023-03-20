@@ -17,7 +17,7 @@ class Service_invite:
     
 
     async def get_company_invites(self) -> InvitesList:
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).check_id()
+        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_owner()
         query = select(Invite).where(Invite.invite_from_company_id == self.company_id)
         invites = await self.db.fetch_all(query)
         return InvitesList(invites=invites)
@@ -41,9 +41,9 @@ class Service_invite:
         # error if no name
         if payload.invite_message == "":
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No message provided")
-        # check if user is admin or owner and if to user exists
+        # check if user is owner and if to user exists
         await Service_user(db=self.db, user=self.user).get_by_id(user_id=payload.invite_to_user_id)
-        await Service_company(db=self.db, user=self.user, company_id=payload.invite_from_company_id).check_id()
+        await Service_company(db=self.db, user=self.user, company_id=payload.invite_from_company_id).is_owner()
         # check if user is not a member
         await self.is_member(user_id=payload.invite_to_user_id)
         # check if invite already exists
@@ -60,8 +60,8 @@ class Service_invite:
 
     async def delete_invite(self, invite_id: int) -> status:
         invite = await self.get_by_id(invite_id=invite_id)
-        # check if user is admin or owner
-        await Service_company(db=self.db, user=self.user, company_id=invite.invite_from_company_id).check_id()
+        # check if user is owner
+        await Service_company(db=self.db, user=self.user, company_id=invite.invite_from_company_id).is_owner()
         # delete invite
         delete(Invite).where(Invite.invite_id == invite_id)
         return status.HTTP_200_OK
@@ -80,7 +80,7 @@ class Service_invite:
 
 
     async def decline_invite(self, invite_id: int) -> status:
-        invite = await self.get_by_id(invite_id=invite_id)
+        await self.get_by_id(invite_id=invite_id)
         # check if user's invite
         await self.check_invite_id(invite_id=invite_id)
         # decline invite

@@ -16,7 +16,7 @@ class Service_request:
     
 
     async def get_company_requests(self) -> RequestsList:
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).check_id()
+        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_owner()
         query = select(Request).where(Request.request_to_company_id == self.company_id)
         requests = await self.db.fetch_all(query)
         return RequestsList(requests=requests)
@@ -68,8 +68,8 @@ class Service_request:
 
     async def accept_request(self, request_id: int) -> status:
         request = await self.get_by_id(request_id=request_id)
-        # check if user is admin or owner
-        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).check_id()
+        # check if user is owner
+        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).is_owner()
         # accept request
         await Service_membership(db=self.db, company_id=request.request_to_company_id).create_membership(
             member_id=request.request_from_user_id, role="user")
@@ -81,8 +81,8 @@ class Service_request:
 
     async def decline_request(self, request_id: int) -> status:
         request = await self.get_by_id(request_id=request_id)
-        # check if user is admin or owner
-        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).check_id()
+        # check if user is owner
+        await Service_company(db=self.db, user=self.user, company_id=request.request_to_company_id).is_owner()
         # decline request
         query=delete(Request).where(Request.request_id == request_id)
         await self.db.execute(query)
@@ -100,7 +100,6 @@ class Service_request:
         if self.company_id in [request.request_to_company_id for request in user_requests.requests]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request already sent")
         
-
     async def check_request_id(self, request_id: int) -> None:
         users_requests = await self.get_my()
         if request_id not in [request.request_id for request in users_requests.requests]:

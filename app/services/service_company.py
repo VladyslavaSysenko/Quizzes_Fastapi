@@ -56,8 +56,8 @@ class Service_company:
 
 
     async def update_company(self, payload:CompanyUpdate) -> CompanySchema:
-        # check if user is admin or owner
-        await self.check_id()
+        # check if user is admin
+        await self.is_owner()
         # update company
         changed_values = self.get_changed_values(payload=payload)
         query = update(Company).where(Company.company_id == self.company_id).values(
@@ -68,8 +68,8 @@ class Service_company:
             
 
     async def delete_member(self, member_id: int) -> status:
-        # check if user is admin or owner
-        await self.check_id()
+        # check if user is owner
+        await self.is_owner()
         #delete member
         await Service_membership(db=self.db, company_id=self.company_id).delete_membership(member_id=member_id)
         return status.HTTP_200_OK
@@ -104,7 +104,8 @@ class Service_company:
         membership = await Service_membership(db=self.db, company_id=self.company_id).change_membership(member_id=member_id, role="admin")
         return membership
     
-    async def downgrade_role(self, member_id: int, new_role: str):
+    
+    async def downgrade_role(self, member_id: int, new_role: str) -> MembershipSchema:
         # check if user's company
         await self.is_owner()
         # check if user exists
@@ -116,22 +117,13 @@ class Service_company:
         membership = await Service_membership(db=self.db, company_id=self.company_id).change_membership(member_id=member_id, role=new_role)
         return membership
         
-        
-    def get_changed_values(self, payload:CompanyUpdate) -> dict:
+
+    def get_changed_values(self, payload:CompanyUpdate) -> CompanyUpdate:
         changed_values = {x[0]:x[1] for x in payload if x[1]}
         # if nothing changed
         if changed_values == {}:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
         return changed_values
-
-    async def check_id(self) -> status:
-        #check if company exists
-        await self.get_by_id(company_id=self.company_id)
-        # check if user is admin or owner
-        company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members(role=["owner", "admin"])
-        if self.user.user_id not in [member.membership_user_id for member in company_members.users]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
-        return status.HTTP_200_OK
 
     async def is_owner(self) -> status:
         #check if company exists

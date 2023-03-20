@@ -89,7 +89,7 @@ class Service_user:
         return password
 
 
-    def get_changed_values(self, payload:UserUpdate) -> dict:
+    def get_changed_values(self, payload:UserUpdate) -> UserSchema:
         changed_values = {x[0]:x[1] for x in payload if x[1]}
         #hash password if changed
         if "user_password" in changed_values:
