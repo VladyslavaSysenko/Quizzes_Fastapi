@@ -113,11 +113,11 @@ class Service_quiz:
         # find out what changed
         changed_quiz_values, changed_question_values = await self.get_changed_values(payload=payload, old_quiz=old_quiz)
         # if questions changed
-        if changed_question_values != []:
+        if changed_question_values:
             await self.delete_questions(quiz_id=quiz_id)
             await self.create_questions(payload=payload.quiz_questions,quiz_id=quiz_id)
         # if quiz info changed
-        if changed_quiz_values != {}:
+        if changed_quiz_values:
             query=update(Quiz).where(Quiz.quiz_id == quiz_id).values(
                 changed_quiz_values
             )
