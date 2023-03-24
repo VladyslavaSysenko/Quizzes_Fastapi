@@ -134,6 +134,18 @@ class Service_company:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your company")
         return status.HTTP_200_OK
     
+    async def is_admin_owner(self) -> status:
+        # check if company exists
+        await self.get_by_id(company_id=self.company_id)
+        # check if user is admin or owner
+        company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members(role=["admin","owner"])
+        if self.user.user_id not in [member.membership_user_id for member in company_members.users]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
+        return status.HTTP_200_OK
+    
+
     async def is_member(self) -> bool:
+        # check if company exists
+        await self.get_by_id(company_id=self.company_id)
         company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members()
         return self.user.user_id in [member.membership_user_id for member in company_members.users]

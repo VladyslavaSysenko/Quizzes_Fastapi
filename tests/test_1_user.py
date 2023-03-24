@@ -5,7 +5,7 @@ async def test_bad_create_user__not_password(ac: AsyncClient):
     payload = {
         "user_password": "",
         "user_password_repeat": "",
-        "user_email": "test@test.test",
+        "user_email": "test@test.com",
         "user_username": "test"
     }
     response = await ac.post("/user", json=payload)
@@ -16,7 +16,7 @@ async def test_bad_create_user__low_password(ac: AsyncClient):
     payload = {
         "user_password": "tet",
         "user_password_repeat": "tet",
-        "user_email": "test@test.test",
+        "user_email": "test@test.com",
         "user_username": "test"
     }
     response = await ac.post("/user", json=payload)
@@ -27,7 +27,7 @@ async def test_bad_create_user__dont_match(ac: AsyncClient):
     payload = {
         "user_password": "test",
         "user_password_repeat": "tess",
-        "user_email": "test@test.test",
+        "user_email": "test@test.com",
         "user_username": "test"
     }
     response = await ac.post("/user", json=payload)
@@ -116,6 +116,18 @@ async def test_create_user_five(ac: AsyncClient):
     assert response.json().get("result").get("user_id") == 5
 
 
+async def test_create_user_six(ac: AsyncClient):
+    payload = {
+        "user_password": "test6",
+        "user_password_repeat": "test6",
+        "user_email": "test6@test.com",
+        "user_username": "test6",
+    }
+    response = await ac.post("/user", json=payload)
+    assert response.status_code == 200
+    assert response.json().get("result").get("user_id") == 6
+
+
 # =================================
 
 
@@ -151,6 +163,11 @@ async def test_try_login_four(ac: AsyncClient, login_user):
 
 async def test_try_login_five(ac: AsyncClient, login_user):
     response = await login_user("test5@test.com", "test5")
+    assert response.status_code == 200
+    assert response.json().get('result').get('token_type') == 'Bearer'
+
+async def test_try_login_six(ac: AsyncClient, login_user):
+    response = await login_user("test6@test.com", "test6")
     assert response.status_code == 200
     assert response.json().get('result').get('token_type') == 'Bearer'
 
@@ -196,7 +213,7 @@ async def test_get_users_list(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/users", headers=headers)
     assert response.status_code == 200
-    assert len(response.json().get("result").get("users")) == 5
+    assert len(response.json().get("result").get("users")) == 6
 
 
 async def test_get_users_list_unauth(ac: AsyncClient):
@@ -225,7 +242,7 @@ async def test_bad_get_user_by_id__not_found(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
-    response = await ac.get("/user/6", headers=headers)
+    response = await ac.get("/user/100", headers=headers)
     assert response.status_code == 404
 
 
@@ -288,4 +305,4 @@ async def test_get_users_list_after_delete(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/users", headers=headers)
     assert response.status_code == 200
-    assert len(response.json().get("result").get("users")) == 4
+    assert len(response.json().get("result").get("users")) == 5

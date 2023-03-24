@@ -18,7 +18,7 @@ from app.core import system_config
 #import your get_db func
 from app.main import get_db
 
-test_db: Database = Database(system_config.DB_TEST.db_url_test, force_rollback=True)
+test_db: Database = Database(system_config.DB_TEST.db_url_test)
 
 def override_get_db() -> Database:
     return test_db
