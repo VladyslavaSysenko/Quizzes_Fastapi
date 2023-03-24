@@ -68,21 +68,16 @@ class Service_quiz:
     async def create_questions(self, payload:QuestionsCreate, quiz_id:int) -> status:
         questions = []
         for question in payload:
-            question = await self.create_question(payload=question, quiz_id=quiz_id)
+            question = {
+             "question_text": question.question_text,
+             "question_choices": question.question_choices,
+             "question_answer": question.question_answer,
+             "question_quiz_id": quiz_id
+            }
             questions.append(question)
+        await self.db.execute_many(query=insert(QuizQuestion), values=questions)
         return status.HTTP_200_OK
 
-
-    async def create_question(self, payload:QuestionCreate, quiz_id:int) -> QuestionSchema:
-        query = insert(QuizQuestion).values(
-             question_text = payload.question_text,
-             question_choices = payload.question_choices,
-             question_answer = payload.question_answer,
-             question_quiz_id = quiz_id
-        ).returning(QuizQuestion)
-        question = await self.db.fetch_one(query)
-        return QuestionSchema(**question)
-    
 
     async def check_questions(self, questions:QuestionsCreate) -> status:
         # check if at least two questions
@@ -153,14 +148,14 @@ class Service_quiz:
         # get changed values
         changed_quiz_values = {x[0]:x[1] for x in payload if x[1] and old_quiz[x[0]] != x[1]}
         try:
-            new_question_values = changed_quiz_values["quiz_questions"]
+            new_question_values = changed_quiz_values.get("quiz_questions")
             changed_question_values = []
             if old_questions != new_question_values:
                 for question in new_question_values:
                     if question not in old_questions:
                         changed_question_values.append(question)
             del changed_quiz_values["quiz_questions"]
-        except KeyError:
+        except TypeError:
             changed_question_values = []
         
         # if nothing changed
