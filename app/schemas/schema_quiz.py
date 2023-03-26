@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, validator
 from fastapi import status, HTTPException
 
 # create question
@@ -133,4 +133,30 @@ class ResponseQuizSchema(BaseModel):
 # response quizzes
 class ResponseQuizzesList(BaseModel):
     result: QuizzesList | None
+    detail: str | None
+
+
+# quiz answer form
+class QuizAnswerSubmit(BaseModel):
+    question_id: int
+    question_answer: str
+
+
+# pass the quiz
+class QuizSubmit(BaseModel):
+    answers: list[QuizAnswerSubmit]
+
+
+# submit quiz schema
+class QuizSubmitSchema(BaseModel):
+    company_id: int
+    quiz_id: int
+    all_questions: int
+    correct_answers: int
+    result: float
+
+
+# response submit quiz
+class ResponseQuizSubmitSchema(BaseModel):
+    result: QuizSubmitSchema | None
     detail: str | None

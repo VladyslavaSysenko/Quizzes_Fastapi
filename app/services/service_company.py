@@ -42,7 +42,7 @@ class Service_company:
         ).returning(Company)
         company = await self.db.fetch_one(query)
         # add owner to members of the company
-        await Service_membership(db=self.db, company_id=company.company_owner_id).create_membership(member_id=owner_id, role="owner")
+        await Service_membership(db=self.db, company_id=company.company_id).create_membership(member_id=owner_id, role="owner")
         return CompanySchema(**company)
 
 
