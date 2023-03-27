@@ -1,11 +1,13 @@
 from schemas.schema_user import UserSchema
-from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate
-from schemas.schema_quiz import QuestionCreate, QuestionUpdate, QuestionSchema, QuestionsCreate, QuestionsUpdate, QuestionsSchema
+from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate, QuizSubmit, QuizSubmitSchema
+from schemas.schema_quiz import QuestionUpdate, QuestionsCreate, QuestionsSchema
 from services.service_company import Service_company
-from db.models import Quiz, QuizQuestion
+from services.service_analytics import Service_analytics
+from db.models import Quiz, QuizQuestion, QuizWorkflow
 from fastapi import status, HTTPException
 from sqlalchemy import select, insert, delete, update
 from databases import Database
+from datetime import date, timedelta
 
 class Service_quiz:
     def __init__(self, db: Database, user: UserSchema = None, company_id: int = None) -> None:
@@ -43,6 +45,47 @@ class Service_quiz:
         query = select(QuizQuestion).where(QuizQuestion.question_quiz_id == quiz_id)
         quiz_questions = await self.db.fetch_all(query)
         return QuestionsSchema(questions=quiz_questions)
+
+
+    async def submit_quiz(self, quiz_id:int, payload:QuizSubmit) -> QuizSubmitSchema:
+        # check if user is member
+        if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
+        # check if company quiz
+        quiz = (await self.get_quiz_by_id(quiz_id=quiz_id))
+        quiz_questions = quiz.quiz_questions
+        # check if no duplicates in quiz question ids
+        id_answered_questions = [record.question_id for record in payload.answers]
+        if len(id_answered_questions) != len(set(id_answered_questions)):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Question ids cannot be duplicated")
+        # check if quiz questions
+        id_quiz_questions = {question.question_id for question in quiz_questions}
+        extra_ids = set(id_answered_questions).difference(id_quiz_questions)
+        if extra_ids:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Quiz does not contain question(s) with id {', '.join(str(id) for id in extra_ids)}")
+        # check if user can submit quiz
+        frequency = quiz.quiz_frequency_in_days
+        query = select(QuizWorkflow).where(QuizWorkflow.workflow_quiz_id == quiz_id, 
+                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
+        last_record = await self.db.fetch_one(query)
+        if last_record:
+            difference = last_record.workflow_date - date.today()
+            if difference <  timedelta(days=frequency):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
+        # check answers
+        correct_answers = 0
+        all_questions = len(quiz_questions)
+        for question in quiz_questions:
+            for record in payload.answers:
+                if question.question_id == record.question_id:
+                    if record.question_answer == question.question_answer:
+                        correct_answers+=1
+                    break
+        result = correct_answers/all_questions
+        total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, all_questions=all_questions, correct_answers=correct_answers, result=result)
+        # create workflow analytics
+        await Service_analytics(db=self.db, user=self.user, company_id=self.company_id).record_quiz_result(payload=total)
+        return total
 
 
     async def create_quiz(self, payload:QuizCreate) -> QuizSchema:

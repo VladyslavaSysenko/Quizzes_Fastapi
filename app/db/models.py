@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Column, DateTime, func, ForeignKey
+from sqlalchemy import Integer, String, Column, DateTime, func, ForeignKey, Date, Float
 from sqlalchemy.orm import declarative_base
 from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy.dialects.postgresql import ARRAY 
@@ -65,3 +65,23 @@ class QuizQuestion(Base):
     question_choices = Column("question_choices", ARRAY(String), nullable=False)
     question_answer = Column("question_answer", String, nullable=False)
     question_quiz_id = Column("question_quiz_id", ForeignKey("quiz.quiz_id", ondelete='CASCADE'))
+
+class QuizWorkflow(Base):
+    __tablename__ = "quiz_workflow"
+    workflow_id = Column("workflow_id", Integer, primary_key=True)
+    workflow_user_id = Column("workflow_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
+    workflow_quiz_id = Column("workflow_quiz_id", ForeignKey("quiz.quiz_id", ondelete="NO ACTION"), nullable=False)
+    workflow_company_id = Column("workflow_company_id", ForeignKey("company.company_id", ondelete='NO ACTION'), nullable=False)
+    workflow_record_correct_answers = Column("workflow_record_correct_answers", Integer, nullable=True)
+    workflow_record_all_questions = Column("workflow_record_all_questions", Integer, nullable=False)
+    workflow_record_result = Column("workflow_record_result", Float, nullable=True)
+    workflow_quiz_correct_answers = Column("workflow_quiz_correct_answers", Integer, nullable=True)
+    workflow_quiz_all_questions = Column("workflow_quiz_all_questions", Integer, nullable=False)
+    workflow_quiz_result = Column("workflow_quiz_result", Float, nullable=True)
+    workflow_company_correct_answers = Column("workflow_company_correct_answers", Integer, nullable=True)
+    workflow_company_all_questions = Column("workflow_company_all_questions", Integer, nullable=False)
+    workflow_company_result = Column("workflow_company_result", Float, nullable=True)
+    workflow_system_correct_answers = Column("workflow_system_correct_answers", Integer, nullable=True)
+    workflow_system_all_questions = Column("workflow_system_all_questions", Integer, nullable=False)
+    workflow_system_result = Column("workflow_system_result", Float, nullable=True)
+    workflow_date = Column("workflow_date", Date(), server_default=func.now())
