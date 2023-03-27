@@ -1058,7 +1058,24 @@ async def test_submit_quiz_wrong_question_id(ac: AsyncClient, users_tokens):
     }
     response = await ac.post('/company/2/quiz/2', headers=headers, json=payload)
     assert response.status_code == 403
-    assert response.json().get('detail') == "Quiz does not contain question with id 6"
+    assert response.json().get('detail') == "Quiz does not contain question(s) with id 6"
+
+
+async def test_submit_quiz_wrong_question_ids(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    payload = {
+        "answers": [
+            {"question_id": 5,
+             "question_answer": "choice_1"},
+             {"question_id": 6,
+             "question_answer": "choice_1"}
+        ]
+    }
+    response = await ac.post('/company/2/quiz/2', headers=headers, json=payload)
+    assert response.status_code == 403
+    assert response.json().get('detail') == "Quiz does not contain question(s) with id 5, 6"
 
 
 async def test_submit_quiz_2_success(ac: AsyncClient, users_tokens):

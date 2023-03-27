@@ -56,19 +56,22 @@ class Service_quiz:
         # check if company quiz
         quiz = (await self.get_quiz_by_id(quiz_id=quiz_id))
         quiz_questions = quiz.quiz_questions
+        # check if no duplicates in quiz question ids
+        id_answered_questions = [record.question_id for record in payload.answers]
+        if len(id_answered_questions) != len(set(id_answered_questions)):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Question ids cannot be duplicated")
         # check if quiz questions
-        id_quiz_questions = [question.question_id for question in quiz_questions]
-        for record in payload.answers:
-            if record.question_id not in id_quiz_questions:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Quiz does not contain question with id {record.question_id}")
+        id_quiz_questions = {question.question_id for question in quiz_questions}
+        extra_ids = set(id_answered_questions).difference(id_quiz_questions)
+        if extra_ids:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Quiz does not contain question(s) with id {', '.join(str(id) for id in extra_ids)}")
         # check if user can submit quiz
         frequency = quiz.quiz_frequency_in_days
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_quiz_id == quiz_id, 
-                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc())
-        records_reverse = await self.db.fetch_all(query)
-        if records_reverse:
-            records_amount = len(records_reverse)
-            difference = records_reverse[0].workflow_date - date.today()
+                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
+        last_record = await self.db.fetch_one(query)
+        if last_record:
+            difference = last_record.workflow_date - date.today()
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
         else:
@@ -193,20 +196,18 @@ class Service_quiz:
 
     async def get_changed_values(self, payload:QuizUpdate, old_quiz:QuizSchema) -> tuple():
         old_questions=[QuestionUpdate(**question.dict()) for question in old_quiz.quiz_questions]
-        # get changed values
+        # get changed quiz values
         changed_quiz_values = {x[0]:x[1] for x in payload if x[1] and old_quiz[x[0]] != x[1]}
-        try:
-            new_question_values = changed_quiz_values.get("quiz_questions")
-            changed_question_values = []
+        # get changed question values
+        new_question_values = changed_quiz_values.get("quiz_questions")
+        changed_question_values = []
+        if new_question_values:
             if old_questions != new_question_values:
                 for question in new_question_values:
                     if question not in old_questions:
                         changed_question_values.append(question)
             del changed_quiz_values["quiz_questions"]
-        except TypeError:
-            changed_question_values = []
-        
         # if nothing changed
-        if changed_quiz_values == {} and changed_question_values == []:
+        if not changed_quiz_values and not changed_question_values:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
         return changed_quiz_values, changed_question_values
