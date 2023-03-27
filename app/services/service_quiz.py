@@ -68,10 +68,11 @@ class Service_quiz:
         # check if user can submit quiz
         frequency = quiz.quiz_frequency_in_days
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_quiz_id == quiz_id, 
-                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
-        last_record = await self.db.fetch_one(query)
-        if last_record:
-            difference = last_record.workflow_date - date.today()
+                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc())
+        records_reverse = await self.db.fetch_all(query)
+        if records_reverse:
+            records_amount = len(records_reverse)
+            difference = records_reverse[0].workflow_date - date.today()
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
         else:
@@ -79,16 +80,24 @@ class Service_quiz:
         # check answers and save them in redis for 2 days
         correct_answers = 0
         all_questions = len(quiz_questions)
+        not_answered_questions = id_quiz_questions.difference(set(id_answered_questions))
         for question in quiz_questions:
-            for record in payload.answers:
-                if question.question_id == record.question_id:
-                    redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, 
-                                                         question_id=question.question_id, answer=record.question_answer, is_answer_correct=False)
-                    if record.question_answer == question.question_answer:
-                        correct_answers+=1
-                        redis_user_results.is_answer_correct = True
-                    await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
-                    break
+            # save false in redis if no answer
+            if question.question_id in not_answered_questions:
+                redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, question_id=question.question_id, answer=None, is_answer_correct=False)
+                await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
+                break
+            else:
+                for record in payload.answers:
+                    # check answer
+                    if question.question_id == record.question_id:
+                        redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, 
+                                                            question_id=question.question_id, answer=record.question_answer, is_answer_correct=False)
+                        if record.question_answer == question.question_answer:
+                            correct_answers+=1
+                            redis_user_results.is_answer_correct = True
+                        await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
+                        break
         result = correct_answers/all_questions
         total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, all_questions=all_questions, correct_answers=correct_answers, result=result)
         # create workflow analytics

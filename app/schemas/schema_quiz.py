@@ -168,5 +168,5 @@ class QuizSubmitRedis(BaseModel):
     company_id: int
     quiz_id: int
     question_id: int
-    answer: str
+    answer: str | None
     is_answer_correct: bool
