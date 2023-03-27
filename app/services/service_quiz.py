@@ -54,11 +54,15 @@ class Service_quiz:
         # check if company quiz
         quiz = (await self.get_quiz_by_id(quiz_id=quiz_id))
         quiz_questions = quiz.quiz_questions
+        # check if no duplicates in quiz question ids
+        id_answered_questions = [record.question_id for record in payload.answers]
+        if len(id_answered_questions) != len(set(id_answered_questions)):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Question ids cannot be duplicated")
         # check if quiz questions
-        id_quiz_questions = [question.question_id for question in quiz_questions]
-        for record in payload.answers:
-            if record.question_id not in id_quiz_questions:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Quiz does not contain question with id {record.question_id}")
+        id_quiz_questions = {question.question_id for question in quiz_questions}
+        extra_ids = set(id_answered_questions).difference(id_quiz_questions)
+        if extra_ids:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Quiz does not contain question(s) with id {', '.join(str(id) for id in extra_ids)}")
         # check if user can submit quiz
         frequency = quiz.quiz_frequency_in_days
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_quiz_id == quiz_id, 
