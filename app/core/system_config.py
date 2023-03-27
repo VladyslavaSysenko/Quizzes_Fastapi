@@ -14,7 +14,7 @@ class DB:
     POSTGRES_URL = f"postgresql+asyncpg://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     REDIS_HOST = os.environ["REDIS_HOST"]
     REDIS_PORT = os.environ["REDIS_PORT"]
-    REDIS_URL = os.environ["REDIS_URL"]
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 
 class DB_TEST:
     TEST_USERNAME = os.environ["TEST_USERNAME"]

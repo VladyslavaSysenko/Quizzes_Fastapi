@@ -1,5 +1,5 @@
 from schemas.schema_user import UserSchema
-from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate, QuizSubmit, QuizSubmitSchema
+from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate, QuizSubmit, QuizSubmitSchema, QuizSubmitRedis
 from schemas.schema_quiz import QuestionUpdate, QuestionsCreate, QuestionsSchema
 from services.service_company import Service_company
 from services.service_analytics import Service_analytics
@@ -8,6 +8,8 @@ from fastapi import status, HTTPException
 from sqlalchemy import select, insert, delete, update
 from databases import Database
 from datetime import date, timedelta
+from core.connections import get_redis
+import json
 
 class Service_quiz:
     def __init__(self, db: Database, user: UserSchema = None, company_id: int = None) -> None:
@@ -62,21 +64,28 @@ class Service_quiz:
         # check if user can submit quiz
         frequency = quiz.quiz_frequency_in_days
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_quiz_id == quiz_id, 
-                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
-        last_record = await self.db.fetch_one(query)
-        if last_record:
-            difference = last_record.workflow_date - date.today()
-            print(difference)
+                                           QuizWorkflow.workflow_user_id == self.user.user_id).order_by(QuizWorkflow.workflow_id.desc())
+        records_reverse = await self.db.fetch_all(query)
+        if records_reverse:
+            records_amount = len(records_reverse)
+            difference = records_reverse[0].workflow_date - date.today()
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
-        # check answers
+        else:
+            records_amount = 0
+        # check answers and save them in redis for 2 days
+        redis = get_redis()
         correct_answers = 0
         all_questions = len(quiz_questions)
         for question in quiz_questions:
             for record in payload.answers:
                 if question.question_id == record.question_id:
+                    redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, 
+                                                         question_id=question.question_id, answer=record.question_answer, is_answer_correct=False)
                     if record.question_answer == question.question_answer:
                         correct_answers+=1
+                        redis_user_results.is_answer_correct = True
+                    await redis.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
                     break
         result = correct_answers/all_questions
         total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, all_questions=all_questions, correct_answers=correct_answers, result=result)
