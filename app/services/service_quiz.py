@@ -66,7 +66,6 @@ class Service_quiz:
         last_record = await self.db.fetch_one(query)
         if last_record:
             difference = last_record.workflow_date - date.today()
-            print(difference)
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
         # check answers
@@ -185,20 +184,18 @@ class Service_quiz:
 
     async def get_changed_values(self, payload:QuizUpdate, old_quiz:QuizSchema) -> tuple():
         old_questions=[QuestionUpdate(**question.dict()) for question in old_quiz.quiz_questions]
-        # get changed values
+        # get changed quiz values
         changed_quiz_values = {x[0]:x[1] for x in payload if x[1] and old_quiz[x[0]] != x[1]}
-        try:
-            new_question_values = changed_quiz_values.get("quiz_questions")
-            changed_question_values = []
+        # get changed question values
+        new_question_values = changed_quiz_values.get("quiz_questions")
+        changed_question_values = []
+        if new_question_values:
             if old_questions != new_question_values:
                 for question in new_question_values:
                     if question not in old_questions:
                         changed_question_values.append(question)
             del changed_quiz_values["quiz_questions"]
-        except TypeError:
-            changed_question_values = []
-        
         # if nothing changed
-        if changed_quiz_values == {} and changed_question_values == []:
+        if not changed_quiz_values and not changed_question_values:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
         return changed_quiz_values, changed_question_values
