@@ -14,7 +14,8 @@ class DB:
     POSTGRES_URL = f"postgresql+asyncpg://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     REDIS_HOST = os.environ["REDIS_HOST"]
     REDIS_PORT = os.environ["REDIS_PORT"]
-    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+    REDIS_DB = os.environ["REDIS_DB"]
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 class DB_TEST:
     TEST_USERNAME = os.environ["TEST_USERNAME"]
@@ -23,6 +24,10 @@ class DB_TEST:
     TEST_HOST = os.environ["TEST_HOST"]
     TEST_PORT = os.environ["TEST_PORT"]
     db_url_test = f"postgresql+asyncpg://{TEST_USERNAME}:{TEST_PASSWORD}@{TEST_HOST}:{DB.POSTGRES_PORT}/{TEST_DB}"
+    REDIS_TEST_HOST = os.environ["REDIS_TEST_HOST"]
+    REDIS_TEST_PORT = os.environ["REDIS_TEST_PORT"]
+    REDIS_TEST_DB = os.environ["REDIS_TEST_DB"]
+    REDIS_TEST_URL = f"redis://{REDIS_TEST_HOST}:{REDIS_TEST_PORT}/{REDIS_TEST_DB}"
 
 class AUTH0:
     DOMAIN = os.environ["DOMAIN"]

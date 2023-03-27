@@ -8,6 +8,7 @@ from databases import Database
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
 from httpx import AsyncClient
+from redis import asyncio as aioredis
 
 #import your app
 from app.main import app
@@ -16,15 +17,19 @@ from app.db.models import Base
 #import your test urls for db
 from app.core import system_config
 #import your get_db func
-from app.main import get_db
+from app.main import get_db, get_redis
 
 test_db: Database = Database(system_config.DB_TEST.db_url_test)
+redis_db = aioredis.from_url(system_config.DB_TEST.REDIS_TEST_URL)
 
 def override_get_db() -> Database:
     return test_db
 
+def override_get_redis():
+    return redis_db
 
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_redis] = override_get_redis
 
 
 engine_test = create_async_engine(system_config.DB_TEST.db_url_test, poolclass=NullPool)
@@ -50,6 +55,7 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     await test_db.disconnect()
+    await redis_db.close()
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 

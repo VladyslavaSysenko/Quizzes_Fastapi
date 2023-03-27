@@ -49,7 +49,7 @@ class Service_quiz:
         return QuestionsSchema(questions=quiz_questions)
 
 
-    async def submit_quiz(self, quiz_id:int, payload:QuizSubmit) -> QuizSubmitSchema:
+    async def submit_quiz(self, quiz_id:int, payload:QuizSubmit, redis_db) -> QuizSubmitSchema:
         # check if user is member
         if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
@@ -74,7 +74,6 @@ class Service_quiz:
         else:
             records_amount = 0
         # check answers and save them in redis for 2 days
-        redis = get_redis()
         correct_answers = 0
         all_questions = len(quiz_questions)
         for question in quiz_questions:
@@ -85,7 +84,7 @@ class Service_quiz:
                     if record.question_answer == question.question_answer:
                         correct_answers+=1
                         redis_user_results.is_answer_correct = True
-                    await redis.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
+                    await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
                     break
         result = correct_answers/all_questions
         total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, all_questions=all_questions, correct_answers=correct_answers, result=result)

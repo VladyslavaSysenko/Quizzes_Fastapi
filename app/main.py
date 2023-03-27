@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from core import connections, system_config
 from routers import router_user, router_auth, router_company, router_invite, router_request, router_membership, router_quiz
-from core.connections import get_db
+from core.connections import get_db, get_redis
 app = FastAPI()
 
 
