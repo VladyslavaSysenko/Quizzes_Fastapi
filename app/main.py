@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from core import connections, system_config
-from routers import router_user, router_auth, router_company, router_invite, router_request
+from routers import router_user, router_auth, router_company, router_invite, router_request, router_membership, router_quiz
 from core.connections import get_db
 app = FastAPI()
 
@@ -28,8 +28,10 @@ async def root():
 app.include_router(router_user.router, prefix="", tags=["users"])
 app.include_router(router_auth.router, prefix="/auth", tags=["auth"])
 app.include_router(router_company.router, prefix="", tags=["company"])
+app.include_router(router_membership.router, prefix='', tags=["membership"])
 app.include_router(router_invite.router, prefix="", tags=["invite"])
 app.include_router(router_request.router, prefix="", tags=["request"])
+app.include_router(router_quiz.router, prefix='', tags=["quiz"])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=system_config.app_host, port=system_config.app_port, reload=True)

@@ -1,6 +1,7 @@
 from sqlalchemy import Integer, String, Column, DateTime, func, ForeignKey
 from sqlalchemy.orm import declarative_base
 from sqlalchemy_utils.types.choice import ChoiceType
+from sqlalchemy.dialects.postgresql import ARRAY 
 
 Base = declarative_base()
 
@@ -48,3 +49,19 @@ class Request(Base):
     request_from_user_id = Column("request_from_user_id", ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
     request_to_company_id = Column("request_to_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
     request_message = Column("request_message", String, nullable=False)
+
+class Quiz(Base):
+    __tablename__ = "quiz"
+    quiz_id = Column("quiz_id", Integer, primary_key=True)
+    quiz_name = Column("quiz_name", String, nullable=False)
+    quiz_description = Column("quiz_description", String, nullable=True)
+    quiz_frequency_in_days = Column("quiz_frequency_in_days", Integer, nullable=False)
+    quiz_company_id = Column("quiz_company_id", ForeignKey("company.company_id", ondelete='CASCADE'), nullable=False)
+
+class QuizQuestion(Base):
+    __tablename__ = "quiz_question"
+    question_id = Column("question_id", Integer, primary_key=True)
+    question_text = Column("question_text", String, nullable=False)
+    question_choices = Column("question_choices", ARRAY(String), nullable=False)
+    question_answer = Column("question_answer", String, nullable=False)
+    question_quiz_id = Column("question_quiz_id", ForeignKey("quiz.quiz_id", ondelete='CASCADE'))

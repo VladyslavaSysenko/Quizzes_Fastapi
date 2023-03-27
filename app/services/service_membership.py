@@ -12,10 +12,12 @@ class Service_membership:
         self.company_id = company_id
 
 
-    async def get_members(self, role: str = None) -> MembershipsList:
-        if role:
+    async def get_members(self, role: str | list[str] = None) -> MembershipsList:
+        if isinstance(role, str):
             query = select(Membership).where(Membership.membership_company_id == self.company_id, Membership.membership_role == role)
-        else:
+        elif isinstance(role, list):
+            query = select(Membership).where(Membership.membership_company_id == self.company_id).filter(Membership.membership_role.in_(role))
+        else: 
             query = select(Membership).where(Membership.membership_company_id == self.company_id)
         members = await self.db.fetch_all(query)
         return MembershipsList(users=members)
