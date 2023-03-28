@@ -160,3 +160,13 @@ class QuizSubmitSchema(BaseModel):
 class ResponseQuizSubmitSchema(BaseModel):
     result: QuizSubmitSchema | None
     detail: str | None
+
+
+# info for redis
+class QuizSubmitRedis(BaseModel):
+    user_id: int
+    company_id: int
+    quiz_id: int
+    question_id: int
+    answer: str | None
+    is_answer_correct: bool

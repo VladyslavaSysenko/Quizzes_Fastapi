@@ -10,6 +10,10 @@ db = Database(DB.POSTGRES_URL)
 def get_db():
     return db
 
+#return redis
+def get_redis():
+    return redis
+
 #connect to database 
 async def connect_to_db():
     await get_db().connect()

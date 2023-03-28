@@ -3,7 +3,7 @@ from services.service_quiz import Service_quiz
 from services.service_auth import get_current_user
 from schemas.schema_user import UserSchema
 from schemas.schema_quiz import ResponseQuizSchema, ResponseQuizzesList, QuizCreate, QuizUpdate, QuizSubmit, ResponseQuizSubmitSchema
-from core.connections import get_db
+from core.connections import get_db, get_redis
 from databases import Database
 
 
@@ -30,8 +30,8 @@ async def sign_up_quiz(company_id:int, payload: QuizCreate, db: Database = Depen
 
 # pass the quiz
 @router.post("/company/{company_id}/quiz/{quiz_id}", response_model=ResponseQuizSubmitSchema, status_code=200)
-async def sign_up_quiz(company_id:int, quiz_id:int, payload:QuizSubmit, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseQuizSubmitSchema:
-    result = await Service_quiz(db=db, company_id=company_id, user=user).submit_quiz(payload=payload, quiz_id=quiz_id)
+async def sign_up_quiz(company_id:int, quiz_id:int, payload:QuizSubmit, db: Database = Depends(get_db), redis_db=Depends(get_redis), user: UserSchema = Depends(get_current_user)) -> ResponseQuizSubmitSchema:
+    result = await Service_quiz(db=db, company_id=company_id, user=user).submit_quiz(payload=payload, quiz_id=quiz_id, redis_db=redis_db)
     return ResponseQuizSubmitSchema(result=result, detail="success")
 
 # update quiz
