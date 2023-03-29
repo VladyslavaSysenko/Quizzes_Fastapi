@@ -1137,3 +1137,65 @@ async def test_submit_quiz_3_success(ac: AsyncClient, users_tokens):
     assert response.json().get("result").get("all_questions") == 2
     assert response.json().get("result").get("correct_answers") == 1
     assert response.json().get("result").get("result") == 0.5
+
+
+async def test_submit_quiz_4_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    payload = {
+        "answers": [
+            {"question_id": 9,
+             "question_answer": "choice_2"}
+        ]
+    }
+    response = await ac.post('/company/1/quiz/5', headers=headers, json=payload)
+    assert response.status_code == 200
+
+
+async def test_submit_quiz_5_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
+    }
+    payload = {
+        "answers": [
+            {"question_id": 7,
+             "question_answer": "choice_1"},
+             {"question_id": 8,
+             "question_answer": "choice_3"}
+        ]
+    }
+    response = await ac.post('/company/2/quiz/4', headers=headers, json=payload)
+    assert response.status_code == 200
+
+
+async def test_submit_quiz_6_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    payload = {
+        "answers": [
+            {"question_id": 5,
+             "question_answer": "choice_1"},
+             {"question_id": 6,
+             "question_answer": "choice_1"}
+        ]
+    }
+    response = await ac.post('/company/2/quiz/3', headers=headers, json=payload)
+    assert response.status_code == 200
+
+
+async def test_submit_quiz_7_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
+    }
+    payload = {
+        "answers": [
+            {"question_id": 5,
+             "question_answer": "choice_3"},
+             {"question_id": 6,
+             "question_answer": "choice_4"}
+        ]
+    }
+    response = await ac.post('/company/2/quiz/3', headers=headers, json=payload)
+    assert response.status_code == 200

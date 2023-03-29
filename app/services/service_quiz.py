@@ -8,7 +8,6 @@ from fastapi import status, HTTPException
 from sqlalchemy import select, insert, delete, update
 from databases import Database
 from datetime import date, timedelta
-from core.connections import get_redis
 import json
 
 class Service_quiz:
@@ -84,22 +83,22 @@ class Service_quiz:
         for question in quiz_questions:
             # save false in redis if no answer
             if question.question_id in not_answered_questions:
-                redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, question_id=question.question_id, answer=None, is_answer_correct=False)
-                await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
+                redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, attempt=records_amount+1, question_id=question.question_id, answer=None, is_answer_correct=False)
+                await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:attempt_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
                 break
             else:
                 for record in payload.answers:
                     # check answer
                     if question.question_id == record.question_id:
-                        redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, 
+                        redis_user_results = QuizSubmitRedis(user_id=self.user.user_id, company_id=self.company_id, quiz_id=quiz_id, attempt=records_amount+1, 
                                                             question_id=question.question_id, answer=record.question_answer, is_answer_correct=False)
                         if record.question_answer == question.question_answer:
                             correct_answers+=1
                             redis_user_results.is_answer_correct = True
-                        await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:try_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
+                        await redis_db.set(f"user_{self.user.user_id}:company_{self.company_id}:quiz_{quiz_id}:question_{question.question_id}:attempt_{records_amount+1}", json.dumps(dict(redis_user_results)), ex=172800)
                         break
         result = correct_answers/all_questions
-        total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, all_questions=all_questions, correct_answers=correct_answers, result=result)
+        total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, attempt=records_amount+1, all_questions=all_questions, correct_answers=correct_answers, result=result)
         # create workflow analytics
         await Service_analytics(db=self.db, user=self.user, company_id=self.company_id).record_quiz_result(payload=total)
         return total
