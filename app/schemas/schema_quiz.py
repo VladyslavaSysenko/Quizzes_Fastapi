@@ -151,6 +151,7 @@ class QuizSubmit(BaseModel):
 class QuizSubmitSchema(BaseModel):
     company_id: int
     quiz_id: int
+    attempt: int
     all_questions: int
     correct_answers: int
     result: float
@@ -167,6 +168,7 @@ class QuizSubmitRedis(BaseModel):
     user_id: int
     company_id: int
     quiz_id: int
+    attempt: int
     question_id: int
     answer: str | None
     is_answer_correct: bool
