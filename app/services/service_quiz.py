@@ -2,7 +2,7 @@ from schemas.schema_user import UserSchema
 from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate, QuizSubmit, QuizSubmitSchema, QuizSubmitRedis
 from schemas.schema_quiz import QuestionUpdate, QuestionsCreate, QuestionsSchema
 from services.service_company import Service_company
-from services.service_analytics import Service_analytics
+import services.service_analytics as service_analytics
 from db.models import Quiz, QuizQuestion, QuizWorkflow
 from fastapi import status, HTTPException
 from sqlalchemy import select, insert, delete, update
@@ -100,7 +100,7 @@ class Service_quiz:
         result = correct_answers/all_questions
         total = QuizSubmitSchema(company_id=self.company_id, quiz_id=quiz_id, attempt=records_amount+1, all_questions=all_questions, correct_answers=correct_answers, result=result)
         # create workflow analytics
-        await Service_analytics(db=self.db, user=self.user, company_id=self.company_id).record_quiz_result(payload=total)
+        await service_analytics.Service_analytics(db=self.db, user=self.user, company_id=self.company_id).record_quiz_result(payload=total)
         return total
 
 
