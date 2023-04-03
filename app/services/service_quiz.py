@@ -3,7 +3,8 @@ from schemas.schema_quiz import QuizCreate, QuizSchema, QuizzesList, QuizUpdate,
 from schemas.schema_quiz import QuestionUpdate, QuestionsCreate, QuestionsSchema
 from services.service_company import Service_company
 import services.service_analytics as service_analytics
-from db.models import Quiz, QuizQuestion, QuizWorkflow
+from services.service_membership import Service_membership
+from db.models import Quiz, QuizQuestion, QuizWorkflow, Notification
 from fastapi import status, HTTPException
 from sqlalchemy import select, insert, delete, update
 from databases import Database
@@ -121,6 +122,18 @@ class Service_quiz:
         await self.create_questions(payload=payload.quiz_questions, quiz_id=quiz_id)
         # add questions to quiz
         quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
+        # send notification to all company users except creator
+        members = (await Service_membership(db=self.db, company_id=self.company_id).get_members()).users
+        for member in members:
+            if member.membership_user_id != self.user.user_id:
+                query = insert(Notification).values(
+                    notification_user_id = member.membership_user_id,
+                    notification_quiz_id = quiz_id,
+                    notification_company_id = self.company_id,
+                    notification_status = False,
+                    notification_text = f'New quiz "{payload.quiz_name}" has been created'
+                )
+                await self.db.execute(query)
         return quiz
 
 

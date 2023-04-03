@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from services.service_data import Service_data
 from services.service_auth import get_current_user
 from schemas.schema_user import UserSchema
-from schemas.schema_data import ResponseData
+from schemas.schema_analytics import ResponseData
 from core.connections import get_db, get_redis
 from databases import Database
 from redis.asyncio.client import Redis

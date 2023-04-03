@@ -1,5 +1,5 @@
 from schemas.schema_user import UserSchema
-from schemas.schema_data import Data, ResponseData
+from schemas.schema_analytics import Data, ResponseData
 from schemas.schema_quiz import QuizSubmitRedis
 from services.service_quiz import Service_quiz
 from services.service_company import Service_company

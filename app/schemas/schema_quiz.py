@@ -127,13 +127,13 @@ class QuizzesList(BaseModel):
 # response quiz
 class ResponseQuizSchema(BaseModel):
     result: QuizSchema | None
-    detail: str | None
+    detail: str
 
 
 # response quizzes
 class ResponseQuizzesList(BaseModel):
     result: QuizzesList | None
-    detail: str | None
+    detail: str
 
 
 # quiz answer form
@@ -160,7 +160,7 @@ class QuizSubmitSchema(BaseModel):
 # response submit quiz
 class ResponseQuizSubmitSchema(BaseModel):
     result: QuizSubmitSchema | None
-    detail: str | None
+    detail: str
 
 
 # info for redis

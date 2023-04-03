@@ -19,7 +19,7 @@ async def get_company_requests(company_id: int, db: Database = Depends(get_db), 
 @router.get("/request/my", response_model=ResponseRequestsList, status_code=200)
 async def get_my_requests(db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseRequestsList:
     requests = await Service_request(db=db, user=user).get_my()
-    return ResponseRequestsList(result=requests)
+    return ResponseRequestsList(result=requests, detail="success")
 
 # accept request
 @router.get("/request/{request_id}/accept", response_model=ResponseRequestSchema, status_code=200)

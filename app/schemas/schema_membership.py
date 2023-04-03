@@ -31,10 +31,9 @@ class AddAdmin(BaseModel):
 # response membership
 class ResponseMembershipSchema(BaseModel):
     result: MembershipSchema | None
-    detail: str | None
-
+    detail: str
 
 # response memberships
 class ResponseMembershipsList(BaseModel):
     result: MembershipsList | None
-    detail: str | None
+    detail: str

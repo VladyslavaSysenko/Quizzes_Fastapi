@@ -52,9 +52,9 @@ class UserUpdate(BaseModel):
 # response user
 class ResponseUserSchema(BaseModel):
     result: UserSchema | None
-    detail: str | None
+    detail: str
 
 # response users
 class ResponseUsersList(BaseModel):
     result: UsersList | None
-    detail: str | None
+    detail: str

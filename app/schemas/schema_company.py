@@ -31,9 +31,9 @@ class CompanyUpdate(BaseModel):
 # response company
 class ResponseCompanySchema(BaseModel):
     result: CompanySchema | None
-    detail: str | None
+    detail: str
 
 # response companies
 class ResponseCompaniesList(BaseModel):
     result: CompaniesList | None
-    detail: str | None
+    detail: str

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from core import connections, system_config
-from routers import router_user, router_auth, router_company, router_invite, router_request, router_membership, router_quiz, router_data, router_analytics
+from routers import router_user, router_auth, router_company, router_invite, router_request, router_membership, router_quiz, router_data, router_analytics, router_notification
 from core.connections import get_db, get_redis
 app = FastAPI()
 
@@ -34,6 +34,7 @@ app.include_router(router_request.router, prefix="", tags=["request"])
 app.include_router(router_quiz.router, prefix='', tags=["quiz"])
 app.include_router(router_data.router, prefix="", tags=["quiz_data"])
 app.include_router(router_analytics.router, prefix="", tags=["analytics"])
+app.include_router(router_notification.router, prefix="", tags=["notification"])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=system_config.app_host, port=system_config.app_port, reload=True)

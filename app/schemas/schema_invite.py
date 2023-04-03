@@ -24,8 +24,9 @@ class InvitesList(BaseModel):
 # response invite
 class ResponseInviteSchema(BaseModel):
     result: InviteSchema | None
-    detail: str | None
+    detail: str
 
 # response invites
 class ResponseInvitesList(BaseModel):
     result: InvitesList
+    detail: str
