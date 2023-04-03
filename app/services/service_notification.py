@@ -18,7 +18,7 @@ class Service_notification:
         return NotificationsList(notifications=notifications)
 
 
-    async def get_notification_by_id(self, notification_id:str) -> NotificationSchema:
+    async def get_notification_by_id(self, notification_id:int) -> NotificationSchema:
         query = select(Notification).where(Notification.notification_id == notification_id)
         notification = await self.db.fetch_one(query)
         if not notification:
