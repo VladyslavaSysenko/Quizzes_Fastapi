@@ -105,6 +105,55 @@ async def test_change_status_to_unread_success(ac: AsyncClient, users_tokens):
     assert response.json().get("detail") == "success"
     assert response.json().get('result').get("notification_status") == False
 
+    
+async def test_change_status_back_to_read_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    response = await ac.post('/notification/6/status', headers=headers)
+    assert response.status_code == 200
+    assert response.json().get("detail") == "success"
+    assert response.json().get('result').get("notification_status") == True
+
+
+# GET ALL READ/UNREAD NOTIFICATIONS
+
+
+async def test_get_all_notifications_not_auth(ac: AsyncClient):
+    response = await ac.get('/notifications/read')
+    assert response.status_code == 403
+
+
+async def test_get_all_read_notifications_wrong_status(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
+    }
+    response = await ac.get('/notifications/re', headers=headers)
+    assert response.status_code == 400
+    assert response.json().get("detail") == "Status must be 'read' or 'unread'"
+
+
+async def test_get_all_read_notifications_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    response = await ac.get('/notifications/read', headers=headers)
+    assert response.status_code == 200
+    assert response.json().get("detail") == "success"
+    assert len(response.json().get('result').get('notifications')) == 1
+    assert response.json().get('result').get('notifications')[0].get("notification_status") == True
+
+
+async def test_get_all_unread_notifications_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}",
+    }
+    response = await ac.get('/notifications/unread', headers=headers)
+    assert response.status_code == 200
+    assert response.json().get("detail") == "success"
+    assert len(response.json().get('result').get('notifications')) == 2
+    assert response.json().get('result').get('notifications')[0].get("notification_status") == False
+
 
 # DELETE NOTIFICATION
 

@@ -12,8 +12,15 @@ class Service_notification:
         self.notification_id = notification_id
 
 
-    async def get_all_notifications(self) -> NotificationsList:
-        query = select(Notification).where(Notification.notification_user_id == self.user.user_id)
+    async def get_all_notifications(self, read_status:str = None) -> NotificationsList:
+        if read_status:
+            # check if status is read or unread
+            if read_status not in ["read", "unread"]:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Status must be 'read' or 'unread'")
+            query = select(Notification).where(Notification.notification_user_id == self.user.user_id, 
+                                               Notification.notification_status == (True if read_status == "read" else False))
+        else:
+            query = select(Notification).where(Notification.notification_user_id == self.user.user_id)
         notifications = await self.db.fetch_all(query)
         return NotificationsList(notifications=notifications)
 

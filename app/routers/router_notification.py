@@ -15,6 +15,12 @@ async def get_notifications(db: Database = Depends(get_db), user: UserSchema = D
     notifications = await Service_notification(db=db, user=user).get_all_notifications()
     return ResponseNotificationsList(result=notifications, detail="success")
 
+# get all read/unread notifications
+@router.get("/notifications/{read_status}", response_model=ResponseNotificationsList, status_code=200)
+async def get_read_unread_notifications(read_status: str, db: Database = Depends(get_db),  user: UserSchema = Depends(get_current_user)) -> ResponseNotificationsList:
+    notifications = await Service_notification(db=db, user=user).get_all_notifications(read_status=read_status)
+    return ResponseNotificationsList(result=notifications, detail="success")
+
 # get notification
 @router.get("/notification/{notification_id}", response_model=ResponseNotificationSchema, status_code=200)
 async def get_notification(notification_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseNotificationSchema:
