@@ -13,7 +13,7 @@ router =  APIRouter()
 @router.get("/company/{company_id}/members", response_model=ResponseMembershipsList, status_code=200)
 async def get_members(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipsList:
     users = await Service_company(db=db, company_id=company_id, user=user).get_members()
-    return ResponseMembershipsList(result=users)
+    return ResponseMembershipsList(result=users, detail="success")
 
 # delete member
 @router.delete("/company/{company_id}/member/{member_id}", response_model=ResponseMembershipSchema, status_code=200)
@@ -25,7 +25,7 @@ async def get_members(company_id: int, member_id: int, db: Database = Depends(ge
 @router.get("/company/{company_id}/admins", response_model=ResponseMembershipsList, status_code=200)
 async def get_admins(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipsList:
     admins = await Service_company(db=db, company_id=company_id, user=user).get_members(role="admin")
-    return ResponseMembershipsList(result=admins)
+    return ResponseMembershipsList(result=admins, detail="success")
 
 # create admin
 @router.post("/company/{company_id}/admin", response_model=ResponseMembershipSchema, status_code=200)

@@ -1,28 +1,15 @@
 from pydantic import BaseModel, validator
 from datetime import date
+from schemas.schema_quiz import QuizSubmitRedis
 
-# workflow schema
-class WorkflowSchema(BaseModel):
-    workflow_id: int
-    workflow_user_id: int
-    workflow_quiz_id: int
-    workflow_company_id: int
-    workflow_record_correct_answers: int
-    workflow_record_all_questions: int
-    workflow_record_result: float
-    workflow_quiz_correct_answers: int
-    workflow_quiz_all_questions: int
-    workflow_quiz_result: float
-    workflow_company_correct_answers: int
-    workflow_company_all_questions: int
-    workflow_company_result: float
-    workflow_system_correct_answers: int
-    workflow_system_all_questions: int
-    workflow_system_result: float
-    workflow_date: date
 
-    class Config:
-        orm_mode = True
+# get redis data
+class Data(BaseModel):
+    data: list[QuizSubmitRedis]
+
+class ResponseData(BaseModel):
+    result: Data
+    detail: str
 
 
 # get company company users analytics for all time

@@ -24,9 +24,9 @@ class RequestsList(BaseModel):
 # response request
 class ResponseRequestSchema(BaseModel):
     result: RequestSchema | None
-    detail: str | None
+    detail: str
 
 # response requests
 class ResponseRequestsList(BaseModel):
     result: RequestsList | None
-    detail: str | None
+    detail: str

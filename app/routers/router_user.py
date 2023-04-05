@@ -13,25 +13,25 @@ router =  APIRouter()
 @router.get("/users", response_model=ResponseUsersList, status_code=200)
 async def get_all_users(db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUsersList:
     users = await Service_user(db=db).get_all()
-    return ResponseUsersList(result=users)
+    return ResponseUsersList(result=users, detail="success")
 
 # get user
 @router.get("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)
 async def get_user(user_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUserSchema:
     user = await Service_user(db=db).get_by_id(user_id=user_id)
-    return ResponseUserSchema(result=user)
+    return ResponseUserSchema(result=user, detail="success")
 
 # create user
 @router.post("/user", response_model=ResponseUserSchema, status_code=200)
 async def sign_up_user(payload: SignUp, db: Database = Depends(get_db)) -> ResponseUserSchema:
     user = await Service_user(db=db).create(payload=payload)
-    return ResponseUserSchema(result=user)
+    return ResponseUserSchema(result=user, detail="success")
 
 # update user
 @router.put("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)
 async def update_user(user_id: int, payload: UserUpdate, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseUserSchema:
     user = await Service_user(db=db, user=user).update_user(user_id=user_id, payload=payload)
-    return ResponseUserSchema(result=user)
+    return ResponseUserSchema(result=user, detail="success")
 
 # delete user
 @router.delete("/user/{user_id}", response_model=ResponseUserSchema, status_code=200)

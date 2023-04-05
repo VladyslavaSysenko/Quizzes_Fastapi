@@ -13,13 +13,13 @@ router =  APIRouter()
 @router.get("/invite/company/{company_id}", response_model=ResponseInvitesList, status_code=200)
 async def get_company_invites(company_id: int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseInvitesList:
     invites = await Service_invite(db=db, company_id=company_id, user=user).get_company_invites()
-    return ResponseInvitesList(result=invites)
+    return ResponseInvitesList(result=invites, detail="success")
 
 # get my invites
 @router.get("/invite/my", response_model=ResponseInvitesList, status_code=200)
 async def get_my_invites(db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseInvitesList:
     invites = await Service_invite(db=db, user=user).get_my()
-    return ResponseInvitesList(result=invites)
+    return ResponseInvitesList(result=invites, detail="success")
 
 # accept invite
 @router.get("/invite/{invite_id}/accept", response_model=ResponseInviteSchema, status_code=200)

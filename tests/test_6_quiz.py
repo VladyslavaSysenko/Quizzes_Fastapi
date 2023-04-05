@@ -290,7 +290,7 @@ async def test_create_quiz_1_owner_success(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
     payload = {
-        "quiz_name": "string",
+        "quiz_name": "quiz_1",
         "quiz_description": "string",
         "quiz_frequency_in_days": 1,
         "quiz_questions": [
@@ -312,7 +312,7 @@ async def test_create_quiz_1_owner_success(ac: AsyncClient, users_tokens):
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
     assert response.status_code == 200
     assert response.json().get('detail') == "success"
-    assert response.json().get("result").get("quiz_name") == "string"
+    assert response.json().get("result").get("quiz_name") == "quiz_1"
     assert response.json().get("result").get("quiz_description") == "string"
     assert response.json().get("result").get("quiz_frequency_in_days") == 1
     assert response.json().get("result").get("quiz_id") == 1
@@ -338,7 +338,7 @@ async def test_create_quiz_2_admin_success(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test3@test.com']}",
     }
     payload = {
-        "quiz_name": "string",
+        "quiz_name": "quiz_2",
         "quiz_description": "string",
         "quiz_frequency_in_days": 1,
         "quiz_questions": [
@@ -357,7 +357,7 @@ async def test_create_quiz_2_admin_success(ac: AsyncClient, users_tokens):
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
     assert response.status_code == 200
     assert response.json().get('detail') == "success"
-    assert response.json().get("result").get("quiz_name") == "string"
+    assert response.json().get("result").get("quiz_name") == "quiz_2"
     assert response.json().get("result").get("quiz_description") == "string"
     assert response.json().get("result").get("quiz_frequency_in_days") == 1
     assert response.json().get("result").get("quiz_id") == 2
@@ -384,10 +384,10 @@ async def test_create_quiz_2_admin_success(ac: AsyncClient, users_tokens):
 
 async def test_create_quiz_3_success(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {users_tokens['test3@test.com']}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
     payload = {
-        "quiz_name": "string",
+        "quiz_name": "quiz_3",
         "quiz_description": "string",
         "quiz_frequency_in_days": 0,
         "quiz_questions": [
@@ -413,7 +413,7 @@ async def test_create_quiz_4_success(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test3@test.com']}",
     }
     payload = {
-        "quiz_name": "string",
+        "quiz_name": "quiz_4",
         "quiz_description": "string",
         "quiz_frequency_in_days": 0,
         "quiz_questions": [
@@ -439,7 +439,7 @@ async def test_create_quiz_5_success(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
     payload = {
-        "quiz_name": "string",
+        "quiz_name": "quiz_5",
         "quiz_description": "string",
         "quiz_frequency_in_days": 0,
         "quiz_questions": [
