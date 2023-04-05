@@ -3,6 +3,7 @@ import uvicorn
 from core import connections, system_config
 from routers import router_user, router_auth, router_company, router_invite, router_request, router_membership, router_quiz, router_data, router_analytics, router_notification
 from core.connections import get_db, get_redis
+from utils.apscheduler import start_scheduler
 app = FastAPI()
 
 
@@ -10,7 +11,7 @@ app = FastAPI()
 async def startup():
     await connections.connect_to_db()
     await connections.connect_to_redis()
-
+    start_scheduler()
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -38,4 +39,3 @@ app.include_router(router_notification.router, prefix="", tags=["notification"])
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=system_config.app_host, port=system_config.app_port, reload=True)
-

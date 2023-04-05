@@ -56,7 +56,7 @@ async def test_get_notification_success(ac: AsyncClient, users_tokens):
     assert response.json().get('result').get("notification_user_id") == 2
     assert response.json().get('result').get("notification_quiz_id") == 2
     assert response.json().get('result').get("notification_company_id") == 2
-    assert response.json().get('result').get("notification_text") == 'New quiz "quiz_2" has been created'
+    assert response.json().get('result').get("notification_text") == 'New quiz "quiz_2" №2 has been created'
     assert response.json().get('result').get("notification_status") == False
 
 
