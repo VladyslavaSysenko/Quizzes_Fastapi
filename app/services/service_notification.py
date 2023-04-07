@@ -5,6 +5,7 @@ from fastapi import status, HTTPException
 from sqlalchemy import select, delete, update
 from databases import Database
 
+
 class Service_notification:
     def __init__(self, db: Database, user: UserSchema, notification_id: int = None) -> None:
         self.db = db

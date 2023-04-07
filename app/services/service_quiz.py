@@ -18,10 +18,11 @@ class Service_quiz:
         self.company_id = company_id
 
 
-    async def get_all_quizzes(self) -> QuizzesList:
-        # check if user is member
-        if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not a member of this company")
+    async def get_all_quizzes(self, scheduler:bool = False) -> QuizzesList:
+        if not scheduler:
+            # check if user is member
+            if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not a member of this company")
         query = select(Quiz).where(Quiz.quiz_company_id == self.company_id)
         quizzes = await self.db.fetch_all(query)
         quizzes_with_questions = []
@@ -131,7 +132,7 @@ class Service_quiz:
                     notification_quiz_id = quiz_id,
                     notification_company_id = self.company_id,
                     notification_status = False,
-                    notification_text = f'New quiz "{payload.quiz_name}" has been created'
+                    notification_text = f'New quiz "{payload.quiz_name}" №{quiz.quiz_id} has been created'
                 )
                 await self.db.execute(query)
         return quiz
