@@ -14,11 +14,11 @@ class Service_membership:
 
     async def get_members(self, role: str | list[str] = None) -> MembershipsList:
         if isinstance(role, str):
-            query = select(Membership).where(Membership.membership_company_id == self.company_id, Membership.membership_role == role)
+            query = select(Membership).where(Membership.membership_company_id == self.company_id, Membership.membership_role == role).order_by(Membership.membership_user_id)
         elif isinstance(role, list):
-            query = select(Membership).where(Membership.membership_company_id == self.company_id).filter(Membership.membership_role.in_(role))
+            query = select(Membership).where(Membership.membership_company_id == self.company_id).filter(Membership.membership_role.in_(role)).order_by(Membership.membership_user_id)
         else: 
-            query = select(Membership).where(Membership.membership_company_id == self.company_id)
+            query = select(Membership).where(Membership.membership_company_id == self.company_id).order_by(Membership.membership_user_id).order_by(Membership.membership_user_id)
         members = await self.db.fetch_all(query)
         return MembershipsList(users=members)
 

@@ -26,6 +26,7 @@ async def test_create_quiz_not_auth(ac: AsyncClient):
     }
     response = await ac.post('/company/2/quiz', json=payload)
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_create_quiz_company_not_found(ac: AsyncClient, users_tokens):
@@ -111,7 +112,7 @@ async def test_create_quiz_no_quiz_name(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "String cannot be empty"
 
 
@@ -134,7 +135,7 @@ async def test_create_quiz_not_two_questions(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Quiz must have at least two questions"
 
 
@@ -163,7 +164,7 @@ async def test_create_quiz_no_question_text(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "String cannot be empty"
 
 
@@ -193,7 +194,7 @@ async def test_create_quiz_same_questions(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Questions must be different"
     
 
@@ -223,7 +224,7 @@ async def test_create_quiz_not_two_choices(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Question must have at least two answer choices"
 
 
@@ -252,7 +253,7 @@ async def test_create_quiz_same_choices(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Answer choices must be different"
 
 
@@ -281,7 +282,7 @@ async def test_create_quiz_no_correct_answer(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.post('/company/2/quiz', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Correct answer must be in answer choices"
 
 
@@ -466,6 +467,7 @@ async def test_create_quiz_5_success(ac: AsyncClient, users_tokens):
 async def test_get_quizzes_not_auth(ac: AsyncClient):
     response = await ac.get('/company/2/quizzes')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_quizzes_company_not_found(ac: AsyncClient, users_tokens):
@@ -482,7 +484,7 @@ async def test_get_quizzes_not_member(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test6@test.com']}",
     }
     response = await ac.get('/company/2/quizzes', headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json().get('detail') == "You are not a member of this company"
 
 
@@ -521,6 +523,7 @@ async def test_update_quiz_not_auth(ac: AsyncClient):
     }
     response = await ac.put('/company/2/quiz/1', json=payload)
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_update_quiz_company_not_found(ac: AsyncClient, users_tokens):
@@ -606,7 +609,7 @@ async def test_update_quiz_no_quiz_name(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "String cannot be empty"
 
 
@@ -629,7 +632,7 @@ async def test_update_quiz_not_two_questions(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Quiz must have at least two questions"
 
 
@@ -658,7 +661,7 @@ async def test_update_quiz_no_question_text(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "String cannot be empty"
 
 
@@ -688,7 +691,7 @@ async def test_update_quiz_same_questions(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Questions must be different"
     
 
@@ -718,7 +721,7 @@ async def test_update_quiz_not_two_choices(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Question must have at least two answer choices"
 
 
@@ -747,7 +750,7 @@ async def test_update_quiz_same_choices(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Answer choices must be different"
 
 
@@ -776,7 +779,7 @@ async def test_update_quiz_no_correct_answer(ac: AsyncClient, users_tokens):
         ]
     }
     response = await ac.put('/company/2/quiz/1', headers=headers, json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert response.json().get('detail') == "Correct answer must be in answer choices"
 
 
@@ -912,6 +915,7 @@ async def test_update_full_quiz_admin_success(ac: AsyncClient, users_tokens):
 async def test_quiz_delete_not_auth(ac: AsyncClient):
     response = await ac.delete('/company/2/quiz/1')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_quiz_delete_company_not_found(ac: AsyncClient, users_tokens):
@@ -973,6 +977,7 @@ async def test_submit_quiz_not_auth(ac: AsyncClient):
     }
     response = await ac.post('/company/2/quiz/2', json=payload)
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_submit_quiz_company_not_found(ac: AsyncClient, users_tokens):

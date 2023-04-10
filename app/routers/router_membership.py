@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from services.service_company import Service_company
 from services.service_auth import get_current_user
 from schemas.schema_user import UserSchema
-from schemas.schema_membership import ResponseMembershipsList, AddAdmin, ResponseMembershipSchema
+from schemas.schema_membership import ResponseMembershipsList, AddMembership, ResponseMembershipSchema
 from core.connections import get_db
 from databases import Database
 
@@ -29,7 +29,7 @@ async def get_admins(company_id: int, db: Database = Depends(get_db), user: User
 
 # create admin
 @router.post("/company/{company_id}/admin", response_model=ResponseMembershipSchema, status_code=200)
-async def sign_up_company(company_id: int, payload: AddAdmin, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipSchema:
+async def sign_up_company(company_id: int, payload: AddMembership, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipSchema:
     membership = await Service_company(db=db, company_id=company_id, user=user).create_admin(member_id=payload.user_id)
     return ResponseMembershipSchema(result=membership, detail="success")
 
@@ -38,3 +38,9 @@ async def sign_up_company(company_id: int, payload: AddAdmin, db: Database = Dep
 async def sign_up_company(company_id: int, user_id:int, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipSchema:
     membership = await Service_company(db=db, company_id=company_id, user=user).downgrade_role(member_id=user_id, new_role="user")
     return ResponseMembershipSchema(result=membership, detail="success")
+
+# give ownership of the company to admin and become admin
+@router.post("/company/{company_id}/ownership", response_model=ResponseMembershipsList, status_code=200)
+async def give_ownership(company_id: int, payload: AddMembership, db: Database = Depends(get_db), user: UserSchema = Depends(get_current_user)) -> ResponseMembershipsList:
+    membership = await Service_company(db=db, company_id=company_id, user=user).give_ownership(member_id=payload.user_id)
+    return ResponseMembershipsList(result=membership, detail="success")

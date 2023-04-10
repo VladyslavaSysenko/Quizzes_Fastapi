@@ -7,6 +7,7 @@ from httpx import AsyncClient
 async def test_get_all_notifications_not_auth(ac: AsyncClient):
     response = await ac.get('/notifications')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_all_notifications_success(ac: AsyncClient, users_tokens):
@@ -25,6 +26,7 @@ async def test_get_all_notifications_success(ac: AsyncClient, users_tokens):
 async def test_get_notification_not_auth(ac: AsyncClient):
     response = await ac.get('/notification/1')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_notification_not_found(ac: AsyncClient, users_tokens):
@@ -40,7 +42,7 @@ async def test_get_notification_not_users(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.get('/notification/5', headers=headers)
+    response = await ac.get('/notification/4', headers=headers)
     assert response.status_code == 403
     assert response.json().get('detail') == "It's not your notification"
 
@@ -49,10 +51,10 @@ async def test_get_notification_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.get('/notification/4', headers=headers)
+    response = await ac.get('/notification/5', headers=headers)
     assert response.status_code == 200
     assert response.json().get("detail") == "success"
-    assert response.json().get('result').get("notification_id") == 4
+    assert response.json().get('result').get("notification_id") == 5
     assert response.json().get('result').get("notification_user_id") == 2
     assert response.json().get('result').get("notification_quiz_id") == 2
     assert response.json().get('result').get("notification_company_id") == 2
@@ -66,6 +68,7 @@ async def test_get_notification_success(ac: AsyncClient, users_tokens):
 async def test_change_status_not_auth(ac: AsyncClient):
     response = await ac.post('/notification/1/status')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_change_status_not_found(ac: AsyncClient, users_tokens):
@@ -81,7 +84,7 @@ async def test_change_status_not_users(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.post('/notification/5/status', headers=headers)
+    response = await ac.post('/notification/4/status', headers=headers)
     assert response.status_code == 403
     assert response.json().get('detail') == "It's not your notification"
 
@@ -90,7 +93,7 @@ async def test_change_status_to_read_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.post('/notification/4/status', headers=headers)
+    response = await ac.post('/notification/5/status', headers=headers)
     assert response.status_code == 200
     assert response.json().get("detail") == "success"
     assert response.json().get('result').get("notification_status") == True
@@ -100,7 +103,7 @@ async def test_change_status_to_unread_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.post('/notification/4/status', headers=headers)
+    response = await ac.post('/notification/5/status', headers=headers)
     assert response.status_code == 200
     assert response.json().get("detail") == "success"
     assert response.json().get('result').get("notification_status") == False
@@ -110,7 +113,7 @@ async def test_change_status_back_to_read_success(ac: AsyncClient, users_tokens)
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
-    response = await ac.post('/notification/6/status', headers=headers)
+    response = await ac.post('/notification/7/status', headers=headers)
     assert response.status_code == 200
     assert response.json().get("detail") == "success"
     assert response.json().get('result').get("notification_status") == True
@@ -122,6 +125,7 @@ async def test_change_status_back_to_read_success(ac: AsyncClient, users_tokens)
 async def test_get_all_notifications_not_auth(ac: AsyncClient):
     response = await ac.get('/notifications/read')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_all_read_notifications_wrong_status(ac: AsyncClient, users_tokens):
@@ -161,6 +165,7 @@ async def test_get_all_unread_notifications_success(ac: AsyncClient, users_token
 async def test_delete_notification_not_auth(ac: AsyncClient):
     response = await ac.delete('/notification/1')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_delete_notification_not_found(ac: AsyncClient, users_tokens):
@@ -176,7 +181,7 @@ async def test_delete_notification_not_users(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.delete('/notification/5', headers=headers)
+    response = await ac.delete('/notification/4', headers=headers)
     assert response.status_code == 403
     assert response.json().get('detail') == "It's not your notification"
 
@@ -185,6 +190,29 @@ async def test_delete_notification_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.delete('/notification/4', headers=headers)
+    response = await ac.delete('/notification/5', headers=headers)
     assert response.status_code == 200
     assert response.json().get("detail") == "success"
+
+
+# DAILY NOTIFICATIONS APSCHEDULER
+
+
+async def test_create_daily_notifications_success(ac: AsyncClient, users_tokens, apscheduler):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
+    }
+    response = await ac.get('/notifications', headers=headers)
+    assert response.status_code == 200
+    assert response.json().get("detail") == "success"
+    assert len(response.json().get('result').get('notifications')) == 4
+
+    response = await ac.get('/notification/14', headers=headers)
+    assert response.status_code == 200
+    assert response.json().get("detail") == "success"
+    assert response.json().get('result').get("notification_id") == 14
+    assert response.json().get('result').get("notification_user_id") == 2
+    assert response.json().get('result').get("notification_quiz_id") == 2
+    assert response.json().get('result').get("notification_company_id") == 2
+    assert response.json().get('result').get("notification_text") == 'Quiz №2 "quiz_2" is available to take in company "test_company_2"'
+    assert response.json().get('result').get("notification_status") == False

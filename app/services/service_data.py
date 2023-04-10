@@ -24,7 +24,8 @@ class Service_data:
 
     async def get_data(self, member_id:int = None, quiz_id:int = None) -> ResponseData | StreamingResponse:
         # check if user is owner or admin
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+        if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
         # check data type
         if self.data_type not in ["json", "csv"]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data type can only be json or csv")
@@ -34,8 +35,9 @@ class Service_data:
             coursor, keys = await self.redis_db.scan(coursor=0, match=f"*company_{self.company_id}*")
         # company info one user
         if member_id and not quiz_id:
-            # check if user is member
-            await self.is_member(member_id=member_id)
+            # check if user exists and is member
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a member of this company")
             coursor, keys = await self.redis_db.scan(coursor=0, match=f"user_{member_id}:company_{self.company_id}*")
         # quiz info
         if quiz_id:
@@ -46,8 +48,9 @@ class Service_data:
                 coursor, keys = await self.redis_db.scan(coursor=0, match=f"*company_{self.company_id}:quiz_{quiz_id}*")
             # quiz info one user    
             if member_id:
-                # check if user is member
-                await self.is_member(member_id=member_id)
+                # check if user exists and is member
+                if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a member of this company")
                 coursor, keys = await self.redis_db.scan(coursor=0, match=f"user_{member_id}:company_{self.company_id}:quiz_{quiz_id}*")
         values_bytes = await self.redis_db.mget(keys)
         values = [json.loads(value.decode('utf-8')) for value in values_bytes]
@@ -65,8 +68,8 @@ class Service_data:
         if self.data_type not in ["json", "csv"]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data type can only be json or csv")
         if self.company_id:
-            # check if user is member of this company
-            if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
+            # check if user exists and is member
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=self.user.user_id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
             # get my company data
             if not quiz_id:
@@ -99,9 +102,3 @@ class Service_data:
         response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=data.csv"
         return response
-
-
-    async def is_member(self, member_id: int) -> None:
-        user = await Service_user(db=self.db, user=self.user).get_by_id(user_id=member_id)
-        if not await Service_company(db=self.db, user=user, company_id=self.company_id).is_member():
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a member of this company")

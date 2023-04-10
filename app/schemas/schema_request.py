@@ -1,9 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from fastapi import HTTPException, status
 
 # create request
 class CreateRequest(BaseModel):
     request_to_company_id: int
     request_message: str
+
+    @validator('request_message')
+    def check_str_not_empty(cls, v):
+        if isinstance(v, str):
+            if len(v) < 1:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message cannot be empty")
+        return v
     
     class Config:
         orm_mode = True

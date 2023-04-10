@@ -14,9 +14,9 @@ def decode_access_token(token: str) -> dict:
         encoded_jwt = jwt.decode(token, key=AUTH0.SECRET_KEY, algorithms=[AUTH0.ALGORITHMS], 
                                  audience=AUTH0.API_AUDIENCE, issuer=AUTH0.ISSUER)
     except jwt.exceptions.DecodeError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect token")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Incorrect token")
     except jwt.exceptions.MissingRequiredClaimError:
         encoded_jwt = jwt.decode(token, key=AUTH0.SECRET_KEY, algorithms=[AUTH0.ALGORITHMS])
     except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Token has expired")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token has expired")
     return encoded_jwt

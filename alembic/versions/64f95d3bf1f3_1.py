@@ -34,7 +34,6 @@ def upgrade() -> None:
     sa.Column('company_name', sa.String(), nullable=False),
     sa.Column('company_owner_id', sa.Integer(), nullable=False),
     sa.Column('company_description', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['company_owner_id'], ['user.user_id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('company_id')
     )
     op.create_table('invite',

@@ -1,5 +1,5 @@
 from schemas.schema_user import SignUp, UserSchema, UserUpdate, UsersList, UserSchemaFull
-from db.models import User
+from db.models import User, Membership
 from utils.password_hasher import Hasher
 from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete, update
@@ -41,7 +41,7 @@ class Service_user:
         # error if email is registered
         db_user_by_email = await self.get_by_email(user_email=payload.user_email)
         if db_user_by_email:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email already registered")
     
         # create user
         hashed_password = Hasher.get_password_hash(password=payload.user_password)
@@ -59,6 +59,10 @@ class Service_user:
     async def delete_user(self, user_id: int) -> status:
         # check if user tries to delete itself
         self.check_id(user_id=user_id)
+        # check if user is not owner of the company
+        query = select(Membership).where(Membership.membership_user_id == user_id, Membership.membership_role == "owner")
+        if await self.db.fetch_one(query):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must give ownership of the company to admin before deletion")
         # delete user
         query = delete(User).where(User.user_id == user_id)
         await self.db.execute(query)
@@ -85,7 +89,7 @@ class Service_user:
         if password != password_repeat:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Passwords do not match")
         if len(password) < 4:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be 4+ characters long.")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be 4+ characters long")
         return password
 
 
@@ -97,7 +101,7 @@ class Service_user:
             del changed_values['user_password_repeat']
         # if nothing changed
         if changed_values == {}:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Nothing to change")
         return changed_values
     
 

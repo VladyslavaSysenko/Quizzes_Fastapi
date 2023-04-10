@@ -18,6 +18,8 @@ from app.db.models import Base
 from app.core import system_config
 #import your get_db func
 from app.main import get_db, get_redis
+from app.utils.apscheduler import send_all_notifications
+
 
 test_db: Database = Database(system_config.DB_TEST.db_url_test)
 redis_db = aioredis.from_url(system_config.DB_TEST.REDIS_TEST_URL)
@@ -87,3 +89,8 @@ async def login_user(ac: AsyncClient, users_tokens):
 def users_tokens():
     tokens_store = dict()
     return tokens_store
+
+
+@pytest.fixture(scope='session')
+async def apscheduler():
+    await send_all_notifications(db=test_db)
