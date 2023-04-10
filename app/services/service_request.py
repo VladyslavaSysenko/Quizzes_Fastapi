@@ -2,6 +2,8 @@ from schemas.schema_request import RequestsList, RequestSchema, CreateRequest
 from schemas.schema_user import UserSchema
 from services.service_company import Service_company
 from services.service_membership import Service_membership
+from services.service_user import Service_user
+import services.service_invite as s_i
 from db.models import Request
 from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete
@@ -37,15 +39,14 @@ class Service_request:
 
 
     async def create(self, payload:CreateRequest) -> RequestSchema:
-        # error if no name
-        if payload.request_message == "":
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No message provided")
         # check if to company exists
         await Service_company(db=self.db, user=self.user).get_by_id(company_id=payload.request_to_company_id)
         # check if user not member
         await self.is_member()
         # check if request already exists
         await self.request_exists()
+        # check if invite already exists
+        await self.invite_exists(company_id=payload.request_to_company_id)
         # create request
         query = insert(Request).values(
             request_from_user_id = self.user.user_id,
@@ -90,15 +91,19 @@ class Service_request:
 
 
     async def is_member(self) -> status:
-        company_members = await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members()
-        if self.user.user_id in [member.membership_user_id for member in company_members.users]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of the company")
+        if await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members(member_id=self.user.user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is already a member of the company")
         return status.HTTP_200_OK
 
     async def request_exists(self) -> None:
         user_requests = await self.get_my()
         if self.company_id in [request.request_to_company_id for request in user_requests.requests]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request already sent")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request already sent")
+        
+    async def invite_exists(self, company_id:int) -> None:
+        company_invites = await s_i.Service_invite(db=self.db, user=self.user, company_id=company_id).get_my()
+        if self.user.user_id in [invite.invite_to_user_id for invite in company_invites.invites]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Company already sent an invite")
         
     async def check_request_id(self, request_id: int) -> None:
         users_requests = await self.get_my()

@@ -55,10 +55,10 @@ class Service_auth:
     
         # incorrect email
         if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Incorrect email")
         
         # incorrect password
         if not Hasher.verify_password(plain_password=payload.user_password, hashed_password=user.user_password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Incorrect password")
 
         return Token(access_token=create_access_token({"sub": user.user_email}), token_type="Bearer")

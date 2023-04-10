@@ -12,25 +12,6 @@ class ResponseData(BaseModel):
     detail: str
 
 
-# get company company users analytics for all time
-class AnalyticsCompanyUsers(BaseModel):
-    user_id: int
-    date: date
-    company_result: float
-
-    @validator('company_result')
-    def result_check(cls, v):
-        return round(v, 2)
-
-class AnalyticsCompanyCompanyUsers(BaseModel):
-    company_id: int
-    analytics: list[AnalyticsCompanyUsers]
-
-class ResponseAnalyticsCompanyCompanyUsers(BaseModel):
-    result: AnalyticsCompanyCompanyUsers
-    detail: str
-
-
 # get company company user analytics for all time
 class AnalyticsCompanyUser(BaseModel):
     date: date
@@ -50,66 +31,17 @@ class ResponseAnalyticsCompanyCompanyUser(BaseModel):
     detail: str
 
 
-# get company quizzes users analytics for all time
-class AnalyticsQuizzesUsers(BaseModel):
-    quiz_id: int
+# get company company users analytics for all time
+class AnalyticsCompanyUsers(BaseModel):
     user_id: int
-    date: date
-    record_result: float
-    quiz_result: float
+    analytics: list[AnalyticsCompanyUser]
 
-    @validator('quiz_result', "record_result")
-    def result_check(cls, v):
-        return round(v, 2)
-
-class AnalyticsCompanyQuizzesUsers(BaseModel):
+class AnalyticsCompanyCompanyUsers(BaseModel):
     company_id: int
-    analytics: list[AnalyticsQuizzesUsers]
+    analytics: list[AnalyticsCompanyUsers]
 
-class ResponseAnalyticsCompanyQuizzesUsers(BaseModel):
-    result: AnalyticsCompanyQuizzesUsers
-    detail: str
-
-
-# get company quizzes user analytics for all time
-class AnalyticsQuizzesUser(BaseModel):
-    quiz_id: int
-    date: date
-    record_result: float
-    quiz_result: float
-
-    @validator('quiz_result', "record_result")
-    def result_check(cls, v):
-        return round(v, 2)
-
-class AnalyticsCompanyQuizzesUser(BaseModel):
-    user_id: int
-    company_id: int
-    analytics: list[AnalyticsQuizzesUser]
-
-class ResponseAnalyticsCompanyQuizzesUser(BaseModel):
-    result: AnalyticsCompanyQuizzesUser
-    detail: str
-
-
-# get company quiz users analytics for all time
-class AnalyticsQuizUsers(BaseModel):
-    user_id: int
-    date: date
-    record_result: float
-    quiz_result: float
-
-    @validator('quiz_result', "record_result")
-    def result_check(cls, v):
-        return round(v, 2)
-
-class AnalyticsCompanyQuizUsers(BaseModel):
-    company_id: int
-    quiz_id: int
-    analytics: list[AnalyticsQuizUsers]
-
-class ResponseAnalyticsCompanyQuizUsers(BaseModel):
-    result: AnalyticsCompanyQuizUsers
+class ResponseAnalyticsCompanyCompanyUsers(BaseModel):
+    result: AnalyticsCompanyCompanyUsers
     detail: str
 
 
@@ -124,9 +56,9 @@ class AnalyticsQuizUser(BaseModel):
         return round(v, 2)
 
 class AnalyticsCompanyQuizUser(BaseModel):
-    user_id: int
     company_id: int
     quiz_id: int
+    user_id: int
     analytics: list[AnalyticsQuizUser]
 
 class ResponseAnalyticsCompanyQuizUser(BaseModel):
@@ -134,10 +66,54 @@ class ResponseAnalyticsCompanyQuizUser(BaseModel):
     detail: str
 
 
+# get company quizzes user analytics for all time
+class AnalyticsQuizzesUser(BaseModel):
+    quiz_id: int
+    analytics: list[AnalyticsQuizUser]
+
+class AnalyticsCompanyQuizzesUser(BaseModel):
+    company_id: int
+    user_id: int
+    analytics: list[AnalyticsQuizzesUser]
+
+class ResponseAnalyticsCompanyQuizzesUser(BaseModel):
+    result: AnalyticsCompanyQuizzesUser
+    detail: str
+
+
+# get company quiz users analytics for all time
+class AnalyticsQuizUsers(BaseModel):
+    user_id: int
+    analytics: list[AnalyticsQuizUser]
+
+class AnalyticsCompanyQuizUsers(BaseModel):
+    company_id: int
+    quiz_id: int
+    analytics: list[AnalyticsQuizUsers]
+
+class ResponseAnalyticsCompanyQuizUsers(BaseModel):
+    result: AnalyticsCompanyQuizUsers
+    detail: str
+
+
+# get company quizzes users analytics for all time
+class AnalyticsQuizzesUsers(BaseModel):
+    quiz_id: int
+    analytics: list[AnalyticsQuizUsers]
+
+class AnalyticsCompanyQuizzesUsers(BaseModel):
+    company_id: int
+    analytics: list[AnalyticsQuizzesUsers]
+
+class ResponseAnalyticsCompanyQuizzesUsers(BaseModel):
+    result: AnalyticsCompanyQuizzesUsers
+    detail: str
+
+
 # get users last company record date
 class AnalyticsLastRecordUsers(BaseModel):
     user_id: int
-    date: date
+    date: date | None
 
 class AnalyticsLastRecordsUsers(BaseModel):
     company_id: int
@@ -163,8 +139,7 @@ class ResponseAnalyticsSystemUser(BaseModel):
 
 
 # get my companies analytics for all time
-class AnalyticsMyCompanies(BaseModel):
-    company_id: int
+class AnalyticsMyCompany(BaseModel):
     date: date
     company_result: float
     
@@ -172,15 +147,17 @@ class AnalyticsMyCompanies(BaseModel):
     def result_check(cls, v):
         return round(v, 2)
 
+class AnalyticsMyCompanies(BaseModel):
+    company_id: int
+    analytics: list[AnalyticsMyCompany]
+
 class ResponseAnalyticsMyCompanies(BaseModel):
     result: list[AnalyticsMyCompanies]
     detail: str
 
 
 # get my quizzes analytics for all time
-class AnalyticsMyQuizzes(BaseModel):
-    company_id: int
-    quiz_id: int
+class AnalyticsMyCompanyQuiz(BaseModel):
     date: date
     quiz_result: float
     
@@ -188,22 +165,30 @@ class AnalyticsMyQuizzes(BaseModel):
     def result_check(cls, v):
         return round(v, 2)
 
+class AnalyticsMyCompanyQuizzes(BaseModel):
+    quiz_id: int
+    analytics: list[AnalyticsMyCompanyQuiz]
+
+class AnalyticsMyCompaniesQuizzes(BaseModel):
+    company_id: int
+    analytics: list[AnalyticsMyCompanyQuizzes]
+
 class ResponseAnalyticsMyQuizzes(BaseModel):
-    result: list[AnalyticsMyQuizzes]
+    result: list[AnalyticsMyCompaniesQuizzes]
     detail: str
 
 
 # get my last quizzes record date
 class AnalyticsMyLastRecordQuiz(BaseModel):
-    company_id: int
     quiz_id: int
     date: date
 
 class AnalyticsMyLastRecordQuizzes(BaseModel):
-    analytics: list[AnalyticsMyLastRecordQuiz]
+    company_id: int
+    last_records: list[AnalyticsMyLastRecordQuiz]
 
 class ResponseAnalyticsMyLastRecordQuizzes(BaseModel):
-    result: AnalyticsMyLastRecordQuizzes
+    result: list[AnalyticsMyLastRecordQuizzes]
     detail: str
 
 

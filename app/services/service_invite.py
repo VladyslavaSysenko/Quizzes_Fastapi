@@ -3,6 +3,7 @@ from schemas.schema_user import UserSchema
 from services.service_company import Service_company
 from services.service_user import Service_user
 from services.service_membership import Service_membership
+import services.service_request as s_r
 from db.models import Invite
 from fastapi import HTTPException, status
 from sqlalchemy import select, insert, delete
@@ -38,9 +39,6 @@ class Service_invite:
 
 
     async def create(self, payload:CreateInvite) -> InviteSchema:
-        # error if no name
-        if payload.invite_message == "":
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No message provided")
         # check if user is owner and if to user exists
         await Service_user(db=self.db, user=self.user).get_by_id(user_id=payload.invite_to_user_id)
         await Service_company(db=self.db, user=self.user, company_id=payload.invite_from_company_id).is_owner()
@@ -48,6 +46,8 @@ class Service_invite:
         await self.is_member(user_id=payload.invite_to_user_id)
         # check if invite already exists
         await self.invite_exists(user_id=payload.invite_to_user_id)
+        # check if request already exists
+        await self.request_exists(user_id=payload.invite_to_user_id)
         # create invite
         query = insert(Invite).values(
             invite_to_user_id = payload.invite_to_user_id,
@@ -63,7 +63,8 @@ class Service_invite:
         # check if user is owner
         await Service_company(db=self.db, user=self.user, company_id=invite.invite_from_company_id).is_owner()
         # delete invite
-        delete(Invite).where(Invite.invite_id == invite_id)
+        query = delete(Invite).where(Invite.invite_id == invite_id)
+        await self.db.execute(query)
         return status.HTTP_200_OK
     
 
@@ -75,7 +76,8 @@ class Service_invite:
         await Service_membership(db=self.db, company_id=invite.invite_from_company_id).create_membership(
             member_id=invite.invite_to_user_id, role="user")
         # delete invite
-        delete(Invite).where(Invite.invite_id == invite_id)
+        query = delete(Invite).where(Invite.invite_id == invite_id)
+        await self.db.execute(query)
         return status.HTTP_200_OK
 
 
@@ -84,22 +86,28 @@ class Service_invite:
         # check if user's invite
         await self.check_invite_id(invite_id=invite_id)
         # decline invite
-        delete(Invite).where(Invite.invite_id == invite_id)
+        query = delete(Invite).where(Invite.invite_id == invite_id)
+        await self.db.execute(query)
         return status.HTTP_200_OK
 
 
     async def check_invite_id(self, invite_id: int) -> None:
         users_invites = await self.get_my()
         if invite_id not in [invite.invite_id for invite in users_invites.invites]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="It's not your invite")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your invite")
         
     async def invite_exists(self, user_id: int) -> None:
-        company_invites = await self.get_my()
+        company_invites = await self.get_company_invites()
         if user_id in [invite.invite_to_user_id for invite in company_invites.invites]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invite already sent")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invite already sent")
+        
+    async def request_exists(self, user_id:int) -> None:
+        user = await Service_user(db=self.db, user=self.user).get_by_id(user_id=user_id)
+        user_requests = await s_r.Service_request(db=self.db, user=user).get_my()
+        if self.company_id in [request.request_to_company_id for request in user_requests.requests]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User already sent a request")
 
     async def is_member(self, user_id: str) -> status:
-        company_members = await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members()
-        if user_id in [member.membership_user_id for member in company_members.users]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of the company")
+        if await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members(member_id=user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is already a member of the company")
         return status.HTTP_200_OK

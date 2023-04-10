@@ -10,6 +10,7 @@ async def test_bad_create_user__not_password(ac: AsyncClient):
     }
     response = await ac.post("/user", json=payload)
     assert response.status_code == 422
+    assert response.json().get('detail') == "Password must be 4+ characters long"
 
 
 async def test_bad_create_user__low_password(ac: AsyncClient):
@@ -21,6 +22,7 @@ async def test_bad_create_user__low_password(ac: AsyncClient):
     }
     response = await ac.post("/user", json=payload)
     assert response.status_code == 422
+    assert response.json().get('detail') == "Password must be 4+ characters long"
 
 
 async def test_bad_create_user__dont_match(ac: AsyncClient):
@@ -32,6 +34,7 @@ async def test_bad_create_user__dont_match(ac: AsyncClient):
     }
     response = await ac.post("/user", json=payload)
     assert response.status_code == 422
+    assert response.json().get('detail') == "Passwords do not match"
 
 
 async def test_bad_create_user__no_valid_email(ac: AsyncClient):
@@ -43,6 +46,7 @@ async def test_bad_create_user__no_valid_email(ac: AsyncClient):
     }
     response = await ac.post("/user", json=payload)
     assert response.status_code == 422
+    assert response.json().get('detail')[0].get("msg") == "value is not a valid email address"
 
 
 async def test_create_user_one(ac: AsyncClient):
@@ -65,7 +69,8 @@ async def test_bad_create_user__email_exist(ac: AsyncClient):
         "user_username": "test2",
     }
     response = await ac.post("/user", json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 403
+    assert response.json().get('detail') == "Email already registered"
 
 
 async def test_create_user_two(ac: AsyncClient):
@@ -133,7 +138,7 @@ async def test_create_user_six(ac: AsyncClient):
 
 async def test_bad_try_login(ac: AsyncClient, login_user):
     response = await login_user("test2@test.com", "test_bad")
-    assert response.status_code == 401
+    assert response.status_code == 422
     assert response.json().get('detail') == 'Incorrect password'
 
 
@@ -201,7 +206,8 @@ async def test_bad_auth_me(ac: AsyncClient):
         "Authorization": "Bearer retretwetrt.rqwryerytwetrty",
     }
     response = await ac.get("/auth/me", headers=headers)
-    assert response.status_code == 401
+    assert response.status_code == 422
+    assert response.json().get('detail') == "Incorrect token"
 
 
 # =====================================================
@@ -219,6 +225,7 @@ async def test_get_users_list(ac: AsyncClient, users_tokens):
 async def test_get_users_list_unauth(ac: AsyncClient):
     response = await ac.get("/users")
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_user_by_id(ac: AsyncClient, users_tokens):
@@ -236,6 +243,7 @@ async def test_get_user_by_id(ac: AsyncClient, users_tokens):
 async def test_get_user_by_id_unauth(ac: AsyncClient):
     response = await ac.get("/user/2")
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_bad_get_user_by_id__not_found(ac: AsyncClient, users_tokens):
@@ -244,6 +252,7 @@ async def test_bad_get_user_by_id__not_found(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/user/100", headers=headers)
     assert response.status_code == 404
+    assert response.json().get('detail') == "User not found"
 
 
 async def test_bad_update_user_one__not_your_acc(ac: AsyncClient, users_tokens):
@@ -282,7 +291,7 @@ async def test_get_user_by_id_updated(ac: AsyncClient, users_tokens):
     assert response.json().get('result').get('user_password') == None
 
 
-async def test_bad_delete_user_five__not_your_acc(ac: AsyncClient, users_tokens):
+async def test_bad_delete_user_five__not_your_account(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }

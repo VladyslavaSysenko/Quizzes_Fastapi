@@ -25,7 +25,7 @@ class MembershipsList(BaseModel):
 
 
 # add admin
-class AddAdmin(BaseModel):
+class AddMembership(BaseModel):
     user_id: int
 
 # response membership

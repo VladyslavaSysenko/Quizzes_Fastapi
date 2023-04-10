@@ -95,100 +95,142 @@ class Service_analytics:
     async def get_company_company_analytics(self, member_id:int = None, my: bool = False) -> AnalyticsCompanyCompanyUsers | AnalyticsCompanyCompanyUser:
         if not my:
             # check if user is owner or admin
-            await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+            if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
+        # get company users analytics for all time
         if not member_id:
-            # get company users analytics for all time
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id)
             data = await self.db.fetch_all(query)
-            company_analytics = [AnalyticsCompanyUsers(user_id=record.workflow_user_id, date=record.workflow_date, company_result=record.workflow_company_result) for record in data]
-            company_users_analytics = AnalyticsCompanyCompanyUsers(company_id=self.company_id, analytics=company_analytics)
-            return company_users_analytics
-
-        if member_id:
+            user_ids = set([record.workflow_user_id for record in data])
+            company_users_analytics = []
+            for user_id in user_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == user_id)
+                user_data = await self.db.fetch_all(query)
+                company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in user_data]
+                company_users_analytics.append(AnalyticsCompanyUsers(user_id=user_id, analytics=company_analytics))
+            return AnalyticsCompanyCompanyUsers(company_id=self.company_id, analytics=company_users_analytics)
         # get company user analytics for all time
-            # check if user is member
-            await self.is_member(member_id=member_id)
+        if member_id:
+            # check if user exists and is member
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=("User is not a member of this company" if not my else "You are not a member of this company"))
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id)
-            data = await self.db.fetch_all(query)
-            company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in data]
-            company_user_analytics = AnalyticsCompanyCompanyUser(company_id=self.company_id, user_id=member_id, analytics=company_analytics)
-            return company_user_analytics
+            user_data = await self.db.fetch_all(query)
+            company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in user_data]
+            return AnalyticsCompanyCompanyUser(company_id=self.company_id, user_id=member_id, analytics=company_analytics)
 
 
     async def get_company_quiz_analytics(self, member_id:int = None, my: bool = False) -> AnalyticsCompanyQuizzesUsers | AnalyticsCompanyQuizzesUser:
         if not my:
             # check if user is owner or admin
-            await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
-        if not member_id:
+            if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
         # get company quizzes users analytics for all time
+        if not member_id:
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id)
             data = await self.db.fetch_all(query)
-            quizzes_analytics = [AnalyticsQuizzesUsers(user_id=record.workflow_user_id, quiz_id=record.workflow_quiz_id, date=record.workflow_date, 
-                                                        quiz_result=record.workflow_quiz_result, record_result=record.workflow_record_result) for record in data]
-            quizzes_users_analytics = AnalyticsCompanyQuizzesUsers(company_id=self.company_id, analytics=quizzes_analytics)
-            return quizzes_users_analytics
-        
-        if member_id:
+            quiz_ids = set([record.workflow_quiz_id for record in data])
+            company_quizzes_analytics = []
+            for quiz_id in quiz_ids:
+                quiz_users_analytics = []
+                user_ids = set([record.workflow_user_id for record in data if record.workflow_quiz_id == quiz_id])
+                for user_id in user_ids:
+                    query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == user_id, 
+                                                       QuizWorkflow.workflow_quiz_id == quiz_id)
+                    quiz_user_data = await self.db.fetch_all(query)
+                    quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
+                                                        record_result=record.workflow_record_result) for record in quiz_user_data]
+                    quiz_users_analytics.append(AnalyticsQuizUsers(user_id=user_id, analytics=quiz_analytics))
+                company_quizzes_analytics.append(AnalyticsQuizzesUsers(quiz_id=quiz_id, analytics=quiz_users_analytics))
+            return AnalyticsCompanyQuizzesUsers(company_id=self.company_id, analytics=company_quizzes_analytics)
         # get company quizzes user analytics for all time
-            # check if user is member
-            await self.is_member(member_id=member_id)
+        if member_id:
+            # check if user exists and is member
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=("User is not a member of this company" if not my else "You are not a member of this company"))
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id)
             data = await self.db.fetch_all(query)
-            quizzes_analytics = [AnalyticsQuizzesUser(quiz_id=record.workflow_quiz_id, date=record.workflow_date, 
-                                                        quiz_result=record.workflow_quiz_result, record_result=record.workflow_record_result) for record in data]
-            quizzes_users_analytics = AnalyticsCompanyQuizzesUser(company_id=self.company_id, user_id=member_id, analytics=quizzes_analytics)
-            return quizzes_users_analytics
+            quiz_ids = set([record.workflow_quiz_id for record in data])
+            company_quizzes_analytics = []
+            for quiz_id in quiz_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, 
+                                                   QuizWorkflow.workflow_quiz_id == quiz_id)
+                quiz_user_data = await self.db.fetch_all(query)
+                quizzes_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
+                                                       record_result=record.workflow_record_result) for record in quiz_user_data]
+                company_quizzes_analytics.append(AnalyticsQuizzesUser(quiz_id=quiz_id, analytics=quizzes_analytics))
+            return AnalyticsCompanyQuizzesUser(company_id=self.company_id, user_id=member_id, analytics=company_quizzes_analytics)
 
 
     async def get_quiz_analytics(self, quiz_id:int, member_id:int = None, my: bool = False) -> AnalyticsCompanyQuizUsers | AnalyticsCompanyQuizUser:
         if not my:
             # check if user is owner or admin
-            await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+            if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
+        else:
+            # check if company exists
+            await Service_company(db=self.db, company_id=self.company_id).get_by_id(company_id=self.company_id)
         # check if company quiz
         await service_quiz.Service_quiz(db=self.db, company_id=self.company_id).get_quiz_by_id(quiz_id=quiz_id)
-        if not member_id:
         # get quiz users analytics for all time
+        if not member_id:
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_quiz_id == quiz_id)
             data = await self.db.fetch_all(query)
-            quiz_analytics = [AnalyticsQuizUsers(user_id=record.workflow_user_id, date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
-                                                 record_result=record.workflow_record_result) for record in data]
-            quiz_users_analytics = AnalyticsCompanyQuizUsers(company_id=self.company_id, quiz_id=quiz_id, analytics=quiz_analytics)
-            return quiz_users_analytics
-        if member_id:
+            user_ids = set([record.workflow_user_id for record in data])
+            quiz_users_analytics = []
+            for user_id in user_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_quiz_id == quiz_id, 
+                                                   QuizWorkflow.workflow_user_id == user_id)
+                user_data = await self.db.fetch_all(query)
+                quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
+                                                 record_result=record.workflow_record_result) for record in user_data]
+                quiz_users_analytics.append(AnalyticsQuizUsers(user_id=user_id, analytics=quiz_analytics))
+            return AnalyticsCompanyQuizUsers(company_id=self.company_id, quiz_id=quiz_id, analytics=quiz_users_analytics)
         # get quiz user analytics for all time
-            # check if user is member
-            await self.is_member(member_id=member_id)
-            query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, QuizWorkflow.workflow_quiz_id == quiz_id)
+        if member_id:
+            # check if user exists and is member
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=("User is not a member of this company" if not my else "You are not a member of this company"))
+            query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, 
+                                               QuizWorkflow.workflow_quiz_id == quiz_id)
             data = await self.db.fetch_all(query)
             quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, record_result=record.workflow_record_result) for record in data]
-            quiz_users_analytics = AnalyticsCompanyQuizUser(company_id=self.company_id, quiz_id=quiz_id, user_id=member_id, analytics=quiz_analytics)
-            return quiz_users_analytics
+            return AnalyticsCompanyQuizUser(company_id=self.company_id, quiz_id=quiz_id, user_id=member_id, analytics=quiz_analytics)
 
     
     async def get_last_record(self) -> AnalyticsLastRecordsUsers | AnalyticsMyLastRecordQuizzes:
         # get users last company record time
         if self.company_id:
             # check if user is owner or admin
+            if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
             members = await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members()
             users_last = []
             for member in members.users:
                 query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == member.membership_user_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
-                last_record_date = (await self.db.fetch_one(query)).workflow_date
+                try:
+                    last_record_date = (await self.db.fetch_one(query)).workflow_date
+                except AttributeError:
+                    last_record_date = None
                 users_last.append(AnalyticsLastRecordUsers(user_id=member.membership_user_id, date=last_record_date))
             company_last = AnalyticsLastRecordsUsers(company_id=self.company_id, analytics=users_last)
             return company_last
-        else:
         # get my last quizzes record time
+        else:
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id)
-            quizzes = await self.db.fetch_all(query)
-            quizzes_last = []
-            for quiz in quizzes:
-                query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, 
-                                                   QuizWorkflow.workflow_quiz_id == quiz.workflow_quiz_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
-                last_record_date = (await self.db.fetch_one(query)).workflow_date
-                quizzes_last.append(AnalyticsMyLastRecordQuiz(company_id=quiz.workflow_company_id, quiz_id=quiz.workflow_quiz_id, date=last_record_date))
-            user_last = AnalyticsMyLastRecordQuizzes(analytics=quizzes_last)
-            return user_last
+            data = await self.db.fetch_all(query)
+            company_ids = set([record.workflow_company_id for record in data])
+            my_last_companies_quizzes_record_time = []
+            for company_id in company_ids:
+                quiz_ids = set([record.workflow_quiz_id for record in data if record.workflow_company_id == company_id])
+                my_last_quizzes_record_time = []
+                for quiz_id in quiz_ids:
+                    query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, 
+                                                   QuizWorkflow.workflow_quiz_id == quiz_id).order_by(QuizWorkflow.workflow_id.desc()).limit(1)
+                    last_record_date = (await self.db.fetch_one(query)).workflow_date
+                    my_last_quizzes_record_time.append(AnalyticsMyLastRecordQuiz(date=last_record_date, quiz_id=quiz_id))
+                my_last_companies_quizzes_record_time.append(AnalyticsMyLastRecordQuizzes(company_id=company_id, last_records=my_last_quizzes_record_time))
+            return my_last_companies_quizzes_record_time
 
     
     async def get_user_system_analytics(self, user_id:int) -> AnalyticsSystemUser:
@@ -203,18 +245,28 @@ class Service_analytics:
     async def get_my_companies_analytics(self) -> list[AnalyticsMyCompanies]:
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id)
         data = await self.db.fetch_all(query)
-        my_companies_analytics = [AnalyticsMyCompanies(company_id=record.workflow_company_id, date=record.workflow_date, company_result=record.workflow_company_result) for record in data]
+        company_ids = set([record.workflow_company_id for record in data])
+        my_companies_analytics = []
+        for company_id in company_ids:
+            query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, QuizWorkflow.workflow_company_id == company_id)
+            company_data = await self.db.fetch_all(query)
+            my_company_analytics = [AnalyticsMyCompany(date=record.workflow_date, company_result=record.workflow_company_result) for record in company_data]
+            my_companies_analytics.append(AnalyticsMyCompanies(company_id=company_id, analytics=my_company_analytics))
         return my_companies_analytics
         
 
-    async def get_my_quizzes_analytics(self) -> list[AnalyticsMyQuizzes]:
+    async def get_my_quizzes_analytics(self) -> list[AnalyticsMyCompaniesQuizzes]:
         query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id)
         data = await self.db.fetch_all(query)
-        my_quizzes_analytics = [AnalyticsMyQuizzes(company_id=record.workflow_company_id, quiz_id=record.workflow_quiz_id, date=record.workflow_date, quiz_result=record.workflow_quiz_result) for record in data]
-        return my_quizzes_analytics
-    
-
-    async def is_member(self, member_id: int) -> None:
-        user = await Service_user(db=self.db, user=self.user).get_by_id(user_id=member_id)
-        if not await Service_company(db=self.db, user=user, company_id=self.company_id).is_member():
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a member of this company")
+        company_ids = set([record.workflow_company_id for record in data])
+        my_companies_quizzes_analytics = []
+        for company_id in company_ids:
+            quiz_ids = set([record.workflow_quiz_id for record in data if record.workflow_company_id == company_id])
+            my_company_quizzes_analytics = []
+            for quiz_id in quiz_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, QuizWorkflow.workflow_quiz_id == quiz_id)
+                quiz_data = await self.db.fetch_all(query)
+                my_company_quiz_analytics = [AnalyticsMyCompanyQuiz(date=record.workflow_date, quiz_result=record.workflow_quiz_result) for record in quiz_data]
+                my_company_quizzes_analytics.append(AnalyticsMyCompanyQuizzes(quiz_id=quiz_id, analytics=my_company_quiz_analytics))
+            my_companies_quizzes_analytics.append(AnalyticsMyCompaniesQuizzes(company_id=company_id, analytics=my_company_quizzes_analytics))
+        return my_companies_quizzes_analytics

@@ -21,8 +21,8 @@ class Service_quiz:
     async def get_all_quizzes(self, scheduler:bool = False) -> QuizzesList:
         if not scheduler:
             # check if user is member
-            if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not a member of this company")
+            if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=self.user.user_id):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
         query = select(Quiz).where(Quiz.quiz_company_id == self.company_id)
         quizzes = await self.db.fetch_all(query)
         quizzes_with_questions = []
@@ -52,7 +52,7 @@ class Service_quiz:
 
     async def submit_quiz(self, quiz_id:int, payload:QuizSubmit, redis_db) -> QuizSubmitSchema:
         # check if user is member
-        if not await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_member():
+        if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=self.user.user_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
         # check if company quiz
         quiz = (await self.get_quiz_by_id(quiz_id=quiz_id))
@@ -73,7 +73,7 @@ class Service_quiz:
         records_reverse = await self.db.fetch_all(query)
         if records_reverse:
             records_amount = len(records_reverse)
-            difference = records_reverse[0].workflow_date - date.today()
+            difference = date.today() - records_reverse[0].workflow_date
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
         else:
@@ -108,7 +108,8 @@ class Service_quiz:
 
     async def create_quiz(self, payload:QuizCreate) -> QuizSchema:
         # check if user is owner or admin
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+        if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
         # check if questions are valid
         await self.check_questions(questions=payload.quiz_questions)
         # create quiz
@@ -155,27 +156,28 @@ class Service_quiz:
     async def check_questions(self, questions:QuestionsCreate) -> status:
         # check if at least two questions
         if len(questions) < 2:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quiz must have at least two questions")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Quiz must have at least two questions")
         # check if questions are different
         if len(questions) != len(set(questions)):
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Questions must be different")
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Questions must be different")
         # check questions
         for question in questions:
             # check if at least two choices in questions
             if len(question.question_choices) < 2:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Question must have at least two answer choices")
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Question must have at least two answer choices")
             # check if choices are different:
             if len(question.question_choices) != len(set(question.question_choices)):
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Answer choices must be different")
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Answer choices must be different")
             # check if answer is in choices
             if question.question_answer not in question.question_choices:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Correct answer must be in answer choices")
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Correct answer must be in answer choices")
         return status.HTTP_200_OK
 
 
     async def update_quiz(self, payload:QuizUpdate, quiz_id:int) -> QuizSchema:
         # check if user is owner or admin
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+        if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
         # check if quiz in company
         old_quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
         # check if questions are valid
@@ -201,7 +203,8 @@ class Service_quiz:
 
     async def delete_quiz(self, quiz_id:int) -> status:
         # check if user is owner or admin
-        await Service_company(db=self.db, user=self.user, company_id=self.company_id).is_admin_owner()
+        if not await Service_company(db=self.db, company_id=self.company_id).is_admin_owner(member_id=self.user.user_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission")
         # check if quiz exists
         await self.get_quiz_by_id(quiz_id=quiz_id)
         # delete quiz
@@ -231,5 +234,5 @@ class Service_quiz:
             del changed_quiz_values["quiz_questions"]
         # if nothing changed
         if not changed_quiz_values and not changed_question_values:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to change")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Nothing to change")
         return changed_quiz_values, changed_question_values

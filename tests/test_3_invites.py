@@ -112,6 +112,20 @@ async def test_send_invite_four_success(ac: AsyncClient, users_tokens):
     assert response.json().get('detail') == "success"
 
 
+async def test_send_invite_five_success(ac: AsyncClient, users_tokens):
+    headers = {
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}",
+    }
+    payload = {
+        "invite_to_user_id": 6,
+        "invite_from_company_id": 2,
+        "invite_message": "string"
+    }
+    response = await ac.post("/invite", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json().get('detail') == "success"
+
+
 # My invites
 
 async def test_my_invites_not_auth(ac: AsyncClient):
@@ -151,6 +165,7 @@ async def test_my_invites_user_three(ac: AsyncClient, users_tokens):
 async def test_company_invites_not_auth(ac: AsyncClient):
     response = await ac.get("/invite/company/1")
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_invites_company_one_not_owner(ac: AsyncClient, users_tokens):
@@ -177,7 +192,7 @@ async def test_invites_company_two(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/invite/company/2", headers=headers)
     assert response.status_code == 200
-    assert len(response.json().get('result').get("invites")) == 2
+    assert len(response.json().get('result').get("invites")) == 3
 
 
 # cancel-invite
@@ -237,7 +252,7 @@ async def test_accept_invite_not_your(ac: AsyncClient, users_tokens):
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
     response = await ac.get("/invite/2/accept", headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json().get('detail') == "It's not your invite"
 
 
@@ -252,13 +267,13 @@ async def test_accept_invite_two_success(ac: AsyncClient, users_tokens):
 
 # decline-invite
 
-async def test_decli_invite_not_auth(ac: AsyncClient):
+async def test_decline_invite_not_auth(ac: AsyncClient):
     response = await ac.get("/invite/1/decline")
     assert response.status_code == 403
     assert response.json().get('detail') == "Not authenticated"
 
 
-async def test_decli_invite_not_found(ac: AsyncClient, users_tokens):
+async def test_decline_invite_not_found(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
@@ -267,16 +282,16 @@ async def test_decli_invite_not_found(ac: AsyncClient, users_tokens):
     assert response.json().get('detail') == "Invite not found"
 
 
-async def test_decli_invite_not_your(ac: AsyncClient, users_tokens):
+async def test_decline_invite_not_your(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
     response = await ac.get("/invite/3/decline", headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json().get('detail') == "It's not your invite"
 
 
-async def test_decli_invite_three_success(ac: AsyncClient, users_tokens):
+async def test_decline_invite_three_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test3@test.com']}",
     }
@@ -284,6 +299,8 @@ async def test_decli_invite_three_success(ac: AsyncClient, users_tokens):
     assert response.status_code == 200
     assert response.json().get('detail') == "success"
 
+
+#--------------------------------------------------------------------------
 
 async def test_members_only_owner(ac: AsyncClient, users_tokens):
     headers = {

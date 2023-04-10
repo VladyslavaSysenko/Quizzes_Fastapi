@@ -19,7 +19,7 @@ class Company(Base):
     __tablename__ = "company"
     company_id = Column(Integer, primary_key=True)
     company_name = Column(String, nullable=False)
-    company_owner_id = Column(ForeignKey("user.user_id", ondelete='CASCADE'), nullable=False)
+    company_owner_id = Column(Integer, nullable=False)
     company_description = Column(String, nullable=True)
 
 class Membership(Base):

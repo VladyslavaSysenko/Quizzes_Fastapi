@@ -7,6 +7,7 @@ from httpx import AsyncClient
 async def test_get_company_users_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/company/2/quizzes')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_company_users_data_json_company_not_found(ac: AsyncClient, users_tokens):
@@ -51,6 +52,7 @@ async def test_get_company_users_data_json_success(ac: AsyncClient, users_tokens
 async def test_get_company_user_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/company/2/quizzes/member/2')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_company_user_data_json_company_not_found(ac: AsyncClient, users_tokens):
@@ -113,6 +115,7 @@ async def test_get_company_user_data_json_success(ac: AsyncClient, users_tokens)
 async def test_get_quiz_users_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/company/2/quiz/2')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_quiz_users_data_json_company_not_found(ac: AsyncClient, users_tokens):
@@ -175,6 +178,7 @@ async def test_get_quiz_users_data_json_success(ac: AsyncClient, users_tokens):
 async def test_get_quiz_users_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/company/2/quiz/2/member/2')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_quiz_users_data_json_company_not_found(ac: AsyncClient, users_tokens):
@@ -255,6 +259,7 @@ async def test_get_quiz_users_data_json_success(ac: AsyncClient, users_tokens):
 async def test_get_my_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/my')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_my_data_json_incorrect_type(ac: AsyncClient, users_tokens):
@@ -281,6 +286,7 @@ async def test_get_my_data_json_success(ac: AsyncClient, users_tokens):
 async def test_get_my_company_data_json_not_auth(ac: AsyncClient, users_tokens):
     response = await ac.get('/data/json/company/2/my')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_my_company_data_json_incorrect_type(ac: AsyncClient, users_tokens):
@@ -325,6 +331,7 @@ async def test_get_my_company_data_json_success(ac: AsyncClient, users_tokens):
 async def test_get_my_quiz_data_json_not_auth(ac: AsyncClient):
     response = await ac.get('/data/json/company/2/quiz/2/my')
     assert response.status_code == 403
+    assert response.json().get('detail') == "Not authenticated"
 
 
 async def test_get_my_quiz_data_json_incorrect_type(ac: AsyncClient, users_tokens):

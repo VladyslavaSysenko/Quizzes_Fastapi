@@ -15,10 +15,10 @@ def start_scheduler() -> None:
     scheduler.add_job(send_all_notifications, "cron", hour=3, minute=0)
     scheduler.start()
 
+db = get_db()
 
-async def send_all_notifications() -> None:
+async def send_all_notifications(db:Database = db) -> None:
     # send notification to all users if they can take a quiz
-    db = get_db()
     companies = (await Service_company(db=db).get_all()).companies
     if companies != []:
         for company in companies:
@@ -33,8 +33,8 @@ async def send_all_notifications() -> None:
                         if not last_record:
                             await send_notification(user_id=member.membership_user_id, quiz=quiz, company=company, db=db)
                         else:
-                            if (last_record.workflow_date - date.today()) >= timedelta(days=quiz.quiz_frequency_in_days):
-                                await send_notification(user_id=member.membership_user_id, quiz=quiz, company_id=company.company_id, db=db)
+                            if (date.today() - last_record.workflow_date) >= timedelta(days=quiz.quiz_frequency_in_days):
+                                await send_notification(user_id=member.membership_user_id, quiz=quiz, company=company, db=db)
                         
 
 async def send_notification(user_id:int, quiz:MembershipSchema, company:CompanySchema, db:Database) -> None:
