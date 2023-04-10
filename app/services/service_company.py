@@ -88,8 +88,7 @@ class Service_company:
         if not await self.is_member(member_id=self.user.user_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this company")
         # check if user is owner
-        owner_id = (await Service_membership(db=self.db, company_id=self.company_id).get_members(role="owner")).users[0].membership_user_id
-        if self.user.user_id == owner_id:
+        if await Service_membership(db=self.db, company_id=self.company_id).get_members(member_id=self.user.user_id, role="owner"):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must give ownership of the company to admin before leaving")
         # leave company
         await Service_membership(db=self.db, company_id=self.company_id).delete_membership(member_id=self.user.user_id)
@@ -152,8 +151,8 @@ class Service_company:
         #check if company exists
         await self.get_by_id(company_id=self.company_id)
         # check if user is owner
-        company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members(role="owner")
-        if self.user.user_id not in [member.membership_user_id for member in company_members.users]:
+        member = await Service_membership(db=self.db, company_id=self.company_id).get_members(role="owner", member_id=self.user.user_id)
+        if not bool(member):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="It's not your company")
         return status.HTTP_200_OK
     
@@ -161,8 +160,8 @@ class Service_company:
         # check if company exists
         await self.get_by_id(company_id=self.company_id)
         # check if user is admin or owner
-        company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members(role=["admin","owner"])
-        return member_id in [member.membership_user_id for member in company_members.users]
+        member = await Service_membership(db=self.db, company_id=self.company_id).get_members(role=["admin","owner"], member_id=member_id)
+        return bool(member)
     
 
     async def is_member(self, member_id:int) -> bool:
@@ -171,5 +170,5 @@ class Service_company:
         # check if member exists
         user = await Service_user(db=self.db, user=self.user).get_by_id(user_id=member_id)
         await Service_user(db=self.db, user=user).get_by_id(user_id=member_id)
-        company_members = await Service_membership(db=self.db, company_id=self.company_id).get_members()
-        return member_id in [member.membership_user_id for member in company_members.users]
+        member = await Service_membership(db=self.db, company_id=self.company_id).get_members(member_id=member_id)
+        return bool(member)

@@ -91,7 +91,7 @@ async def test_get_company_by_id_one(users_tokens, ac: AsyncClient):
     assert response.json().get("result").get("company_owner_id") == 1
 
 
-async def test_get_company_by_id_tw0(users_tokens, ac: AsyncClient):
+async def test_get_company_by_id_two(users_tokens, ac: AsyncClient):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }

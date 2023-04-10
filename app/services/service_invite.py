@@ -108,7 +108,6 @@ class Service_invite:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User already sent a request")
 
     async def is_member(self, user_id: str) -> status:
-        company_members = await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members()
-        if user_id in [member.membership_user_id for member in company_members.users]:
+        if await Service_membership(db=self.db, user=self.user, company_id=self.company_id).get_members(member_id=user_id):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is already a member of the company")
         return status.HTTP_200_OK

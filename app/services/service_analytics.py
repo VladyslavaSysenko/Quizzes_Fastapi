@@ -104,7 +104,9 @@ class Service_analytics:
             user_ids = set([record.workflow_user_id for record in data])
             company_users_analytics = []
             for user_id in user_ids:
-                company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in data if record.workflow_user_id == user_id]
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == user_id)
+                user_data = await self.db.fetch_all(query)
+                company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in user_data]
                 company_users_analytics.append(AnalyticsCompanyUsers(user_id=user_id, analytics=company_analytics))
             return AnalyticsCompanyCompanyUsers(company_id=self.company_id, analytics=company_users_analytics)
         # get company user analytics for all time
@@ -113,8 +115,8 @@ class Service_analytics:
             if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=("User is not a member of this company" if not my else "You are not a member of this company"))
             query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id)
-            data = await self.db.fetch_all(query)
-            company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in data]
+            user_data = await self.db.fetch_all(query)
+            company_analytics = [AnalyticsCompanyUser(date=record.workflow_date, company_result=record.workflow_company_result) for record in user_data]
             return AnalyticsCompanyCompanyUser(company_id=self.company_id, user_id=member_id, analytics=company_analytics)
 
 
@@ -133,8 +135,11 @@ class Service_analytics:
                 quiz_users_analytics = []
                 user_ids = set([record.workflow_user_id for record in data if record.workflow_quiz_id == quiz_id])
                 for user_id in user_ids:
+                    query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == user_id, 
+                                                       QuizWorkflow.workflow_quiz_id == quiz_id)
+                    quiz_user_data = await self.db.fetch_all(query)
                     quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
-                                                    record_result=record.workflow_record_result) for record in data if record.workflow_user_id == user_id and record.workflow_quiz_id == quiz_id]
+                                                        record_result=record.workflow_record_result) for record in quiz_user_data]
                     quiz_users_analytics.append(AnalyticsQuizUsers(user_id=user_id, analytics=quiz_analytics))
                 company_quizzes_analytics.append(AnalyticsQuizzesUsers(quiz_id=quiz_id, analytics=quiz_users_analytics))
             return AnalyticsCompanyQuizzesUsers(company_id=self.company_id, analytics=company_quizzes_analytics)
@@ -148,8 +153,11 @@ class Service_analytics:
             quiz_ids = set([record.workflow_quiz_id for record in data])
             company_quizzes_analytics = []
             for quiz_id in quiz_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, 
+                                                   QuizWorkflow.workflow_quiz_id == quiz_id)
+                quiz_user_data = await self.db.fetch_all(query)
                 quizzes_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
-                                                       record_result=record.workflow_record_result) for record in data if record.workflow_quiz_id == quiz_id]
+                                                       record_result=record.workflow_record_result) for record in quiz_user_data]
                 company_quizzes_analytics.append(AnalyticsQuizzesUser(quiz_id=quiz_id, analytics=quizzes_analytics))
             return AnalyticsCompanyQuizzesUser(company_id=self.company_id, user_id=member_id, analytics=company_quizzes_analytics)
 
@@ -171,8 +179,11 @@ class Service_analytics:
             user_ids = set([record.workflow_user_id for record in data])
             quiz_users_analytics = []
             for user_id in user_ids:
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_quiz_id == quiz_id, 
+                                                   QuizWorkflow.workflow_user_id == user_id)
+                user_data = await self.db.fetch_all(query)
                 quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, 
-                                                 record_result=record.workflow_record_result) for record in data if record.workflow_user_id == user_id]
+                                                 record_result=record.workflow_record_result) for record in user_data]
                 quiz_users_analytics.append(AnalyticsQuizUsers(user_id=user_id, analytics=quiz_analytics))
             return AnalyticsCompanyQuizUsers(company_id=self.company_id, quiz_id=quiz_id, analytics=quiz_users_analytics)
         # get quiz user analytics for all time
@@ -180,7 +191,8 @@ class Service_analytics:
             # check if user exists and is member
             if not await Service_company(db=self.db, company_id=self.company_id).is_member(member_id=member_id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=("User is not a member of this company" if not my else "You are not a member of this company"))
-            query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, QuizWorkflow.workflow_quiz_id == quiz_id)
+            query = select(QuizWorkflow).where(QuizWorkflow.workflow_company_id == self.company_id, QuizWorkflow.workflow_user_id == member_id, 
+                                               QuizWorkflow.workflow_quiz_id == quiz_id)
             data = await self.db.fetch_all(query)
             quiz_analytics = [AnalyticsQuizUser(date=record.workflow_date, quiz_result=record.workflow_quiz_result, record_result=record.workflow_record_result) for record in data]
             return AnalyticsCompanyQuizUser(company_id=self.company_id, quiz_id=quiz_id, user_id=member_id, analytics=quiz_analytics)
@@ -236,7 +248,9 @@ class Service_analytics:
         company_ids = set([record.workflow_company_id for record in data])
         my_companies_analytics = []
         for company_id in company_ids:
-            my_company_analytics = [AnalyticsMyCompany(date=record.workflow_date, company_result=record.workflow_company_result) for record in data if record.workflow_company_id == company_id]
+            query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, QuizWorkflow.workflow_company_id == company_id)
+            company_data = await self.db.fetch_all(query)
+            my_company_analytics = [AnalyticsMyCompany(date=record.workflow_date, company_result=record.workflow_company_result) for record in company_data]
             my_companies_analytics.append(AnalyticsMyCompanies(company_id=company_id, analytics=my_company_analytics))
         return my_companies_analytics
         
@@ -250,7 +264,9 @@ class Service_analytics:
             quiz_ids = set([record.workflow_quiz_id for record in data if record.workflow_company_id == company_id])
             my_company_quizzes_analytics = []
             for quiz_id in quiz_ids:
-                my_company_quiz_analytics = [AnalyticsMyCompanyQuiz(date=record.workflow_date, quiz_result=record.workflow_quiz_result) for record in data if record.workflow_quiz_id == quiz_id]
+                query = select(QuizWorkflow).where(QuizWorkflow.workflow_user_id == self.user.user_id, QuizWorkflow.workflow_quiz_id == quiz_id)
+                quiz_data = await self.db.fetch_all(query)
+                my_company_quiz_analytics = [AnalyticsMyCompanyQuiz(date=record.workflow_date, quiz_result=record.workflow_quiz_result) for record in quiz_data]
                 my_company_quizzes_analytics.append(AnalyticsMyCompanyQuizzes(quiz_id=quiz_id, analytics=my_company_quiz_analytics))
             my_companies_quizzes_analytics.append(AnalyticsMyCompaniesQuizzes(company_id=company_id, analytics=my_company_quizzes_analytics))
         return my_companies_quizzes_analytics

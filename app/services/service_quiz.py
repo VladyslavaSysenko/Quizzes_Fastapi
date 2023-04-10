@@ -73,7 +73,7 @@ class Service_quiz:
         records_reverse = await self.db.fetch_all(query)
         if records_reverse:
             records_amount = len(records_reverse)
-            difference = records_reverse[0].workflow_date - date.today()
+            difference = date.today() - records_reverse[0].workflow_date
             if difference <  timedelta(days=frequency):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You must wait {timedelta(days=frequency).days - difference.days} more day(s)")
         else:

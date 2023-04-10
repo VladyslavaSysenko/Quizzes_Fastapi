@@ -33,7 +33,7 @@ async def send_all_notifications(db:Database = db) -> None:
                         if not last_record:
                             await send_notification(user_id=member.membership_user_id, quiz=quiz, company=company, db=db)
                         else:
-                            if (last_record.workflow_date - date.today()) >= timedelta(days=quiz.quiz_frequency_in_days):
+                            if (date.today() - last_record.workflow_date) >= timedelta(days=quiz.quiz_frequency_in_days):
                                 await send_notification(user_id=member.membership_user_id, quiz=quiz, company=company, db=db)
                         
 
