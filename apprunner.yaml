@@ -1,0 +1,41 @@
+version: 1.0
+runtime: python3 
+build:
+  commands:
+    build:        
+      - pip install --no-cache-dir --upgrade -r requirements.txt
+run:
+  command: python -m pytest; alembic upgrade head && python app/main.py
+  env:
+   - name : APP_PORT
+     value: 8000
+   - name : APP_HOST
+     value: "0.0.0.0"
+   - name : POSTGRES_USERNAME
+     value: postgres
+   - name : POSTGRES_PASSWORD
+     value: postgres
+   - name : POSTGRES_DB
+     value: postgres
+   - name : POSTGRES_PORT
+     value: 5432
+   - name : POSTGRES_HOST
+     value: postgres
+   - name : REDIS_HOST
+     value: redis
+   - name : REDIS_PORT
+     value: 6379
+   - name : REDIS_DB
+     value: 0
+   - name : DOMAIN
+     value: dev-utye8i2sq3dypdif.us.auth0.com
+   - name : API_AUDIENCE
+     value: https://quiz.com
+   - name : ALGORITHMS
+     value: HS256
+   - name : ISSUER
+     value: https://dev-utye8i2sq3dypdif.us.auth0.com/
+   - name : SECRET_KEY
+     value: OBffrVcIM5FCSh2pHoaNXIVK6OASCF56
+   - name : ACCESS_TOKEN_EXPIRE_MINUTES
+     value: 1440
